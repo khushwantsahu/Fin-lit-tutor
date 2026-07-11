@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – Fin-Lit-Tutor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <style>
+    .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-card { width: 100%; max-width: 440px; padding: 40px 36px; }
+    .auth-logo { width: 64px; height: 64px; background: var(--gradient-main); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; box-shadow: var(--shadow-neon); }
+    .social-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: var(--radius-md); color: var(--text-primary); cursor: pointer; font-weight: 500; padding: 12px; transition: var(--transition); width: 100%; }
+    .social-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--accent); }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border-glass); }
+    .divider span { color: var(--text-muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="glass-card auth-card">
+    <div class="text-center mb-5">
+      <div class="auth-logo float">💰</div>
+      <h1 class="heading-md gradient-text">Welcome Back</h1>
+      <p class="text-muted mt-2" style="font-size:0.9rem;">Sign in to your Fin-Lit-Tutor account</p>
+    </div>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert-{{ 'success' if category == 'success' else 'info' }} mb-3">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <div id="errorAlert" class="alert-scam mb-3" style="display:none;">
+      <span id="errorMsg"></span>
+    </div>
+    <form id="loginForm" onsubmit="submitLogin(event)">
+      <div class="mb-4">
+        <label class="form-label-fin">Email Address</label>
+        <input type="email" name="email" class="form-fin" placeholder="you@example.com" required>
+      </div>
+      <div class="mb-4">
+        <div class="d-flex justify-content-between mb-2">
+          <label class="form-label-fin mb-0">Password</label>
+          <a href="#" style="font-size:0.8rem;color:var(--neon-blue);">Forgot password?</a>
+        </div>
+        <input type="password" name="password" class="form-fin" placeholder="Your password" required>
+      </div>
+      <div class="d-flex align-items-center gap-2 mb-5">
+        <input type="checkbox" name="remember" id="remember" style="accent-color:var(--accent);">
+        <label for="remember" class="form-label-fin mb-0" style="cursor:pointer;">Remember me</label>
+      </div>
+      <button type="submit" class="btn-neon w-100" id="loginBtn" style="padding:14px;">
+        Sign In →
+      </button>
+    </form>
+    <p class="text-center mt-4" style="font-size:0.875rem;color:var(--text-muted);">
+      Don't have an account? <a href="{{ url_for('auth.register') }}" style="color:var(--neon-blue);font-weight:600;">Create one free</a>
+    </p>
+    <div class="text-center mt-5 pt-4" style="border-top:1px solid var(--border-glass);">
+      <a href="{{ url_for('main.index') }}" style="color:var(--text-muted);font-size:0.8rem;">← Back to Home</a>
+    </div>
+  </div>
+</div>
+<script>
+async function submitLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+  const form = e.target;
+  const data = { email: form.email.value, password: form.password.value, remember: form.remember.checked };
+  const res = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  const result = await res.json();
+  if (result.success) {
+    window.location.href = result.redirect;
+  } else {
+    document.getElementById('errorAlert').style.display = 'block';
+    document.getElementById('errorMsg').textContent = '⚠️ ' + result.message;
+    btn.textContent = 'Sign In →';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

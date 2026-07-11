@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan & EMI Calculator – Fin-Lit-Tutor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    .module-page { max-width: 1100px; margin: 80px auto 40px; padding: 0 20px; }
+    .emi-result-card { background: var(--gradient-main); border-radius: var(--radius-lg); padding: 28px; text-align: center; }
+    .emi-number { font-size: 2.5rem; font-weight: 800; color: white; }
+  </style>
+</head>
+<body>
+<nav class="navbar-fin">
+  <div class="container-fluid px-3">
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="/" class="navbar-brand-fin gradient-text" style="text-decoration:none;font-size:1.2rem;"><div class="nav-logo" style="width:30px;height:30px;font-size:15px;">💰</div>Fin-Lit-Tutor</a>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-neon-outline" style="padding:6px 14px;font-size:0.8rem;">← Dashboard</a>
+        <a href="{{ url_for('chat.chat_page') }}" class="btn-neon" style="padding:6px 14px;font-size:0.8rem;">💬 Ask AI</a>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="module-page">
+  <div class="text-center mb-5">
+    <span class="badge-fin">Smart Tools</span>
+    <h1 class="heading-lg gradient-text-gold mt-3">🏦 Loan & EMI Calculator</h1>
+    <p class="text-secondary mt-2">Calculate your EMI, total interest, and full amortization schedule</p>
+  </div>
+  <!-- Loan Type Selector -->
+  <div class="d-flex flex-wrap gap-2 justify-content-center mb-5">
+    <button class="lang-pill active" onclick="setLoanType('personal',15,'personal')">Personal Loan</button>
+    <button class="lang-pill" onclick="setLoanType('home',8.5,'home')">Home Loan</button>
+    <button class="lang-pill" onclick="setLoanType('car',9,'auto')">Car Loan</button>
+    <button class="lang-pill" onclick="setLoanType('education',10,'education')">Education Loan</button>
+    <button class="lang-pill" onclick="setLoanType('mudra',12,'mudra')">MUDRA Loan</button>
+  </div>
+  <div class="row g-4">
+    <!-- Input Form -->
+    <div class="col-lg-5">
+      <div class="glass-card p-4">
+        <h5 style="font-weight:700;margin-bottom:20px;">Loan Details</h5>
+        <div class="mb-4">
+          <label class="form-label-fin">Loan Amount (₹)</label>
+          <input type="number" id="principal" class="form-fin" value="500000" min="1000">
+          <input type="range" id="principalSlider" class="mt-2" min="10000" max="10000000" step="10000" value="500000">
+          <div class="d-flex justify-content-between mt-1">
+            <span style="font-size:0.72rem;color:var(--text-muted);">₹10,000</span>
+            <span style="font-size:0.75rem;color:var(--neon-gold);font-weight:600;" id="principalDisplay">₹5,00,000</span>
+            <span style="font-size:0.72rem;color:var(--text-muted);">₹1 Crore</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label-fin">Annual Interest Rate (%)</label>
+          <input type="number" id="rate" class="form-fin" value="15" min="1" max="36" step="0.1">
+          <input type="range" id="rateSlider" class="mt-2" min="5" max="36" step="0.1" value="15">
+          <div class="d-flex justify-content-between mt-1">
+            <span style="font-size:0.72rem;color:var(--text-muted);">5%</span>
+            <span style="font-size:0.75rem;color:var(--neon-gold);font-weight:600;" id="rateDisplay">15%</span>
+            <span style="font-size:0.72rem;color:var(--text-muted);">36%</span>
+          </div>
+        </div>
+        <div class="mb-5">
+          <label class="form-label-fin">Loan Tenure (Months)</label>
+          <input type="number" id="tenure" class="form-fin" value="24" min="3" max="360">
+          <input type="range" id="tenureSlider" class="mt-2" min="3" max="360" step="1" value="24">
+          <div class="d-flex justify-content-between mt-1">
+            <span style="font-size:0.72rem;color:var(--text-muted);">3 months</span>
+            <span style="font-size:0.75rem;color:var(--neon-gold);font-weight:600;" id="tenureDisplay">24 months</span>
+            <span style="font-size:0.72rem;color:var(--text-muted);">30 years</span>
+          </div>
+        </div>
+        <button onclick="calculateEMI()" class="btn-gold w-100" style="padding:14px;">
+          📊 Calculate EMI
+        </button>
+        <!-- RBI Reference -->
+        <div class="mt-4 pt-4" style="border-top:1px solid var(--border-glass);">
+          <div style="font-size:0.8rem;color:var(--text-muted);">📋 Current RBI Repo Rate: <strong style="color:var(--neon-blue);">6.5%</strong> | Check <a href="https://rbi.org.in" target="_blank" style="color:var(--neon-blue);">rbi.org.in</a> for latest rates</div>
+        </div>
+      </div>
+    </div>
+    <!-- Results -->
+    <div class="col-lg-7">
+      <div id="emiResults" style="display:none;">
+        <!-- EMI Card -->
+        <div class="emi-result-card mb-4">
+          <div style="font-size:0.85rem;color:rgba(255,255,255,0.7);margin-bottom:8px;">Monthly EMI</div>
+          <div class="emi-number" id="emiAmount">—</div>
+          <div style="font-size:0.9rem;color:rgba(255,255,255,0.8);margin-top:8px;" id="emiSubtext"></div>
+        </div>
+        <!-- Summary -->
+        <div class="row g-3 mb-4">
+          <div class="col-4">
+            <div class="glass-card p-3 text-center">
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">PRINCIPAL</div>
+              <div style="font-weight:700;color:var(--neon-blue);" id="principalResult">—</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="glass-card p-3 text-center">
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">TOTAL INTEREST</div>
+              <div style="font-weight:700;color:#fc8181;" id="totalInterest">—</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="glass-card p-3 text-center">
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">TOTAL PAYMENT</div>
+              <div style="font-weight:700;color:var(--neon-green);" id="totalPayment">—</div>
+            </div>
+          </div>
+        </div>
+        <!-- Donut Chart -->
+        <div class="glass-card p-4 mb-4">
+          <h6 style="font-weight:700;margin-bottom:16px;">Principal vs Interest Breakdown</h6>
+          <div class="row align-items-center">
+            <div class="col-6"><div style="height:200px;position:relative;"><canvas id="emiDonut"></canvas></div></div>
+            <div class="col-6">
+              <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1"><span style="font-size:0.8rem;">Principal</span><span id="principalPct" style="font-size:0.8rem;color:var(--neon-blue);font-weight:600;"></span></div>
+                <div class="progress-fin"><div class="progress-bar-fin" id="principalBar" style="width:0%;"></div></div>
+              </div>
+              <div>
+                <div class="d-flex justify-content-between mb-1"><span style="font-size:0.8rem;">Interest</span><span id="interestPct" style="font-size:0.8rem;color:#fc8181;font-weight:600;"></span></div>
+                <div class="progress-fin"><div class="progress-bar-fin progress-bar-danger" id="interestBar" style="width:0%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Amortization Table -->
+        <div class="glass-card p-4">
+          <h6 style="font-weight:700;margin-bottom:16px;">📋 Amortization Schedule</h6>
+          <div style="overflow-x:auto;">
+            <table class="table-fin w-100">
+              <thead><tr><th>Month</th><th>EMI (₹)</th><th>Principal (₹)</th><th>Interest (₹)</th><th>Balance (₹)</th></tr></thead>
+              <tbody id="amortTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="emiWaiting" class="glass-card p-5 text-center">
+        <div style="font-size:3rem;margin-bottom:16px;">🏦</div>
+        <p class="text-muted">Fill in the loan details and click Calculate EMI</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let donutChart = null;
+// Slider sync
+['principal','rate','tenure'].forEach(id => {
+  const input = document.getElementById(id);
+  const slider = document.getElementById(id + 'Slider');
+  const display = document.getElementById(id + 'Display');
+  const fmt = v => id === 'principal' ? '₹' + parseInt(v).toLocaleString('en-IN') : id === 'rate' ? v + '%' : v + ' months';
+  input.addEventListener('input', () => { slider.value = input.value; display.textContent = fmt(input.value); });
+  slider.addEventListener('input', () => { input.value = slider.value; display.textContent = fmt(slider.value); });
+});
+function setLoanType(type, rate, label) {
+  document.getElementById('rate').value = rate;
+  document.getElementById('rateSlider').value = rate;
+  document.getElementById('rateDisplay').textContent = rate + '%';
+  document.querySelectorAll('.lang-pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+}
+async function calculateEMI() {
+  const principal = parseFloat(document.getElementById('principal').value);
+  const rate = parseFloat(document.getElementById('rate').value);
+  const tenure = parseInt(document.getElementById('tenure').value);
+  if (!principal || !rate || !tenure) { alert('Please fill all fields'); return; }
+  const res = await fetch('/api/emi', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ principal, annual_rate: rate, tenure_months: tenure }) });
+  const { data } = await res.json();
+  document.getElementById('emiWaiting').style.display = 'none';
+  document.getElementById('emiResults').style.display = 'block';
+  const fmt = n => '₹' + n.toLocaleString('en-IN');
+  document.getElementById('emiAmount').textContent = fmt(data.emi);
+  document.getElementById('emiSubtext').textContent = `for ${tenure} months`;
+  document.getElementById('principalResult').textContent = fmt(data.principal);
+  document.getElementById('totalInterest').textContent = fmt(data.total_interest);
+  document.getElementById('totalPayment').textContent = fmt(data.total_payment);
+  const pct = 100 - data.interest_percentage;
+  document.getElementById('principalPct').textContent = pct.toFixed(1) + '%';
+  document.getElementById('interestPct').textContent = data.interest_percentage + '%';
+  document.getElementById('principalBar').style.width = pct + '%';
+  document.getElementById('interestBar').style.width = data.interest_percentage + '%';
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('emiDonut'), {
+    type: 'doughnut',
+    data: { labels:['Principal','Interest'], datasets:[{ data:[data.principal, data.total_interest], backgroundColor:['#667eea','#fc8181'], borderWidth:0 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#a0aec0', font:{size:11} } } } }
+  });
+  document.getElementById('amortTable').innerHTML = data.schedule.map(row =>
+    `<tr><td>${row.month}</td><td>${row.emi.toLocaleString('en-IN')}</td><td>${row.principal.toLocaleString('en-IN')}</td><td>${row.interest.toLocaleString('en-IN')}</td><td>${row.balance.toLocaleString('en-IN')}</td></tr>`
+  ).join('');
+}
+</script>
+</body>
+</html>

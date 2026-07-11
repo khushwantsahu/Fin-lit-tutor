@@ -1,0 +1,64 @@
+<header class="fs-topbar" role="banner">
+
+  <!-- Mobile hamburger -->
+  <button class="fs-topbar__hamburger" id="sidebarToggle"
+          aria-label="Open navigation" aria-controls="appSidebar" aria-expanded="false">
+    <i class="fa-solid fa-bars"></i>
+  </button>
+
+  <!-- Breadcrumb -->
+  <nav class="fs-topbar__breadcrumb" aria-label="Breadcrumb">
+    <span class="fs-topbar__breadcrumb-home">
+      <i class="fa-solid fa-house" aria-hidden="true"></i>
+    </span>
+    <span class="fs-topbar__breadcrumb-sep" aria-hidden="true">/</span>
+    <span class="fs-topbar__breadcrumb-current">
+      {% block breadcrumb %}Dashboard{% endblock %}
+    </span>
+  </nav>
+
+  <!-- Right actions -->
+  <div class="fs-topbar__actions">
+    <a href="{{ url_for('chat.chat_page') }}" class="fs-topbar__cta" aria-label="Open AI Chatbot">
+      <i class="fa-solid fa-comment-dots" aria-hidden="true"></i>
+      <span>Ask Fin-Lit-Tutor</span>
+    </a>
+    <a href="{{ url_for('auth.profile') }}" class="fs-topbar__avatar" aria-label="My profile">
+      {{ current_user.name[0] | upper }}
+    </a>
+  </div>
+
+</header>
+
+<!-- Mobile overlay backdrop -->
+<div class="fs-sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+<script>
+(function () {
+  const btn      = document.getElementById('sidebarToggle');
+  const sidebar  = document.getElementById('appSidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  if (!btn || !sidebar || !backdrop) return;
+
+  function open() {
+    sidebar.classList.add('is-open');
+    backdrop.classList.add('is-visible');
+    btn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    sidebar.classList.remove('is-open');
+    backdrop.classList.remove('is-visible');
+    btn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  btn.addEventListener('click', () =>
+    sidebar.classList.contains('is-open') ? close() : open()
+  );
+  backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+})();
+</script>

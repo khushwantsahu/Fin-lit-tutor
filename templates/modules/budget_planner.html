@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Planner – Fin-Lit-Tutor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    .module-page { max-width: 1100px; margin: 80px auto 40px; padding: 0 20px; }
+    .budget-result { display: none; }
+    .budget-category { padding: 14px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); margin-bottom: 8px; }
+    .budget-amount { font-size: 1.5rem; font-weight: 800; }
+    .chart-pie-container { height: 300px; position: relative; }
+    .tip-card { background: rgba(102,126,234,0.08); border: 1px solid rgba(102,126,234,0.2); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+<nav class="navbar-fin">
+  <div class="container-fluid px-3">
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="/" class="navbar-brand-fin gradient-text" style="text-decoration:none;font-size:1.2rem;"><div class="nav-logo" style="width:30px;height:30px;font-size:15px;">💰</div>Fin-Lit-Tutor</a>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-neon-outline" style="padding:6px 14px;font-size:0.8rem;">← Dashboard</a>
+        <a href="{{ url_for('chat.chat_page') }}" class="btn-neon" style="padding:6px 14px;font-size:0.8rem;">💬 Ask AI</a>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="module-page">
+  <div class="text-center mb-5">
+    <span class="badge-fin">Smart Tools</span>
+    <h1 class="heading-lg gradient-text mt-3">💰 Smart Budget Planner</h1>
+    <p class="text-secondary mt-2">Based on the proven 50-30-20 budgeting rule</p>
+  </div>
+  <div class="row g-4">
+    <!-- Input Form -->
+    <div class="col-lg-5">
+      <div class="glass-card p-4">
+        <h5 style="font-weight:700;margin-bottom:20px;">Enter Your Income</h5>
+        <div class="mb-4">
+          <label class="form-label-fin">Monthly Income (₹)</label>
+          <input type="number" id="incomeInput" class="form-fin" placeholder="e.g. 50000" min="1000" value="50000">
+          <div style="margin-top:8px;">
+            <input type="range" id="incomeSlider" min="5000" max="500000" step="1000" value="50000">
+            <div class="d-flex justify-content-between mt-1">
+              <span style="font-size:0.72rem;color:var(--text-muted);">₹5,000</span>
+              <span style="font-size:0.75rem;color:var(--accent);font-weight:600;" id="incomeDisplay">₹50,000</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);">₹5,00,000</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="calculateBudget()" class="btn-neon w-100" style="padding:14px;">
+          📊 Calculate My Budget
+        </button>
+        <!-- 50-30-20 Explanation -->
+        <div class="mt-4 pt-4" style="border-top:1px solid var(--border-glass);">
+          <h6 style="font-weight:700;margin-bottom:12px;">📖 The 50-30-20 Rule</h6>
+          <div class="budget-category">
+            <div class="d-flex justify-content-between">
+              <span style="font-weight:600;color:var(--neon-blue);">50% – Needs</span>
+              <span class="badge-fin">Essential</span>
+            </div>
+            <p class="text-muted mt-1 mb-0" style="font-size:0.8rem;">Rent, food, utilities, transport, healthcare</p>
+          </div>
+          <div class="budget-category">
+            <div class="d-flex justify-content-between">
+              <span style="font-weight:600;color:var(--neon-gold);">30% – Wants</span>
+              <span class="badge-warning">Lifestyle</span>
+            </div>
+            <p class="text-muted mt-1 mb-0" style="font-size:0.8rem;">Entertainment, dining out, shopping, hobbies</p>
+          </div>
+          <div class="budget-category">
+            <div class="d-flex justify-content-between">
+              <span style="font-weight:600;color:var(--neon-green);">20% – Savings</span>
+              <span class="badge-success">Future</span>
+            </div>
+            <p class="text-muted mt-1 mb-0" style="font-size:0.8rem;">Emergency fund, SIP, PPF, insurance premiums</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Results -->
+    <div class="col-lg-7">
+      <!-- Waiting State -->
+      <div id="waitingState" class="glass-card p-5 text-center">
+        <div style="font-size:3rem;margin-bottom:16px;">📊</div>
+        <p class="text-muted">Enter your monthly income to see your personalized budget breakdown</p>
+      </div>
+      <!-- Results State -->
+      <div id="budgetResult" class="budget-result">
+        <!-- Summary Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-4">
+            <div class="glass-card p-3 text-center">
+              <div style="color:var(--neon-blue);font-size:0.75rem;font-weight:600;margin-bottom:6px;">NEEDS 50%</div>
+              <div class="budget-amount gradient-text" id="needsAmount">—</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="glass-card p-3 text-center">
+              <div style="color:var(--neon-gold);font-size:0.75rem;font-weight:600;margin-bottom:6px;">WANTS 30%</div>
+              <div class="budget-amount gradient-text-gold" id="wantsAmount">—</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="glass-card p-3 text-center">
+              <div style="color:var(--neon-green);font-size:0.75rem;font-weight:600;margin-bottom:6px;">SAVINGS 20%</div>
+              <div class="budget-amount gradient-text-green" id="savingsAmount">—</div>
+            </div>
+          </div>
+        </div>
+        <!-- Pie Chart -->
+        <div class="glass-card p-4 mb-4">
+          <h6 style="font-weight:700;margin-bottom:16px;">Budget Breakdown</h6>
+          <div class="row align-items-center">
+            <div class="col-6">
+              <div class="chart-pie-container"><canvas id="budgetPieChart"></canvas></div>
+            </div>
+            <div class="col-6" id="needsBreakdown"></div>
+          </div>
+        </div>
+        <!-- Savings Tips -->
+        <div class="glass-card p-4">
+          <h6 style="font-weight:700;margin-bottom:16px;">💡 Savings Recommendations</h6>
+          <div id="savingsTips"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let pieChart = null;
+const slider = document.getElementById('incomeSlider');
+const input = document.getElementById('incomeInput');
+const display = document.getElementById('incomeDisplay');
+
+slider.addEventListener('input', function() {
+  input.value = this.value;
+  display.textContent = '₹' + parseInt(this.value).toLocaleString('en-IN');
+});
+input.addEventListener('input', function() {
+  slider.value = this.value;
+  display.textContent = '₹' + (parseInt(this.value) || 0).toLocaleString('en-IN');
+});
+
+async function calculateBudget() {
+  const income = parseFloat(document.getElementById('incomeInput').value);
+  if (!income || income < 1000) { alert('Please enter a valid monthly income'); return; }
+  const res = await fetch('/api/budget', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ monthly_income: income }) });
+  const { data } = await res.json();
+
+  // Cache budget in localStorage for dashboard integration
+  localStorage.setItem('finBudget', JSON.stringify({
+    monthly_income: data.monthly_income,
+    needs: data.needs.amount,
+    wants: data.wants.amount,
+    savings: data.savings.amount,
+    timestamp: new Date().getTime()
+  }));
+
+  document.getElementById('waitingState').style.display = 'none';
+  document.getElementById('budgetResult').style.display = 'block';
+  document.getElementById('needsAmount').textContent = '₹' + data.needs.amount.toLocaleString('en-IN');
+  document.getElementById('wantsAmount').textContent = '₹' + data.wants.amount.toLocaleString('en-IN');
+  document.getElementById('savingsAmount').textContent = '₹' + data.savings.amount.toLocaleString('en-IN');
+  // Needs Breakdown
+  document.getElementById('needsBreakdown').innerHTML = data.needs.categories.map(c =>
+    `<div class="d-flex justify-content-between mb-2">
+      <span style="font-size:0.82rem;color:var(--text-secondary);">${c.name}</span>
+      <span style="font-size:0.82rem;font-weight:600;color:var(--neon-blue);">₹${c.suggested.toLocaleString('en-IN')}</span>
+    </div>`
+  ).join('');
+  // Pie Chart
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(document.getElementById('budgetPieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Needs', 'Wants', 'Savings'],
+      datasets: [{ data: [50, 30, 20], backgroundColor: ['#667eea','#f6ad55','#48bb78'], borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:'#a0aec0', font:{size:12} } } } }
+  });
+  // Savings tips
+  document.getElementById('savingsTips').innerHTML = [
+    `<div class="tip-card">💰 Emergency Fund: Save ₹${Math.round(data.savings.categories[0].suggested).toLocaleString('en-IN')}/month (3-6 months of expenses goal)</div>`,
+    `<div class="tip-card">📈 SIP Investment: Start with ₹${Math.round(data.savings.categories[1].suggested).toLocaleString('en-IN')}/month in an index mutual fund</div>`,
+    `<div class="tip-card">🏖️ Retirement (NPS/PPF): Save ₹${Math.round(data.savings.categories[2].suggested).toLocaleString('en-IN')}/month for tax-free retirement corpus</div>`,
+    `<div class="tip-card">🛡️ Insurance: Allocate ₹${Math.round(data.savings.categories[3].suggested).toLocaleString('en-IN')}/month for PMJJBY + PMSBY + health insurance</div>`,
+    `<div class="tip-card">💡 Tip: ${data.tip}</div>`,
+  ].join('');
+}
+</script>
+</body>
+</html>

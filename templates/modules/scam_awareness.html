@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scam Awareness – Fin-Lit-Tutor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <style>
+    .module-page { max-width: 1000px; margin: 80px auto 40px; padding: 0 20px; }
+    .scam-card { padding: 24px; border-left: 4px solid; margin-bottom: 16px; }
+    .red-card { border-color: #fc8181; background: rgba(245,101,101,0.06); }
+    .scam-checker-result { display: none; padding: 20px; border-radius: 14px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+<nav class="navbar-fin">
+  <div class="container-fluid px-3">
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="/" class="navbar-brand-fin gradient-text" style="text-decoration:none;font-size:1.2rem;"><div class="nav-logo" style="width:30px;height:30px;font-size:15px;">💰</div>Fin-Lit-Tutor</a>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-neon-outline" style="padding:6px 14px;font-size:0.8rem;">← Dashboard</a>
+        <a href="{{ url_for('chat.chat_page') }}" class="btn-neon" style="padding:6px 14px;font-size:0.8rem;">💬 Ask AI</a>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="module-page">
+  <div class="text-center mb-5">
+    <span class="badge-danger">Security Alert</span>
+    <h1 class="heading-lg mt-3" style="color:#fc8181;">🚨 Scam Awareness Center</h1>
+    <p class="text-secondary mt-2">Learn to identify financial frauds and protect your money</p>
+    <div class="d-flex justify-content-center gap-3 mt-3">
+      <div style="background:rgba(245,101,101,0.15);border:1px solid rgba(245,101,101,0.3);border-radius:100px;padding:8px 20px;font-size:0.875rem;">
+        🆘 Cyber Crime Helpline: <strong style="color:#fc8181;">1930</strong>
+      </div>
+      <a href="https://cybercrime.gov.in" target="_blank" style="background:rgba(99,179,237,0.15);border:1px solid rgba(99,179,237,0.3);border-radius:100px;padding:8px 20px;font-size:0.875rem;color:var(--neon-blue);">
+        🌐 cybercrime.gov.in
+      </a>
+    </div>
+  </div>
+
+  <!-- Scam Checker Tool -->
+  <div class="glass-card p-4 mb-5">
+    <h5 style="font-weight:700;margin-bottom:16px;">🔍 Scam Message Checker</h5>
+    <p class="text-secondary mb-3" style="font-size:0.875rem;">Paste a suspicious message, SMS, or call description to check if it shows signs of fraud:</p>
+    <textarea id="scamText" class="form-fin w-100" rows="4" placeholder="Paste suspicious message here... e.g. 'You have won a lottery, send OTP to claim your prize'"></textarea>
+    <button onclick="checkScam()" class="btn-neon mt-3" style="background:var(--gradient-danger);">🔍 Check for Scam</button>
+    <div id="scamResult" class="scam-checker-result"></div>
+  </div>
+
+  <!-- Common Scam Types -->
+  <h3 class="heading-md mb-4">⚠️ Common Scam Types in India</h3>
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="glass-card scam-card red-card">
+        <h5 style="color:#fc8181;font-weight:700;">📱 UPI Scams</h5>
+        <ul class="text-secondary mt-2 mb-0" style="font-size:0.875rem;line-height:1.8;padding-left:20px;">
+          <li>Requesting money to <em>send</em> you money (collect request fraud)</li>
+          <li>Fake merchant QR codes at shops</li>
+          <li>Phishing links pretending to be UPI apps</li>
+          <li>Impersonating family members in distress</li>
+        </ul>
+        <div class="mt-3 p-2" style="background:rgba(245,101,101,0.1);border-radius:8px;font-size:0.8rem;color:#fc8181;">
+          🛡️ <strong>Safe Rule:</strong> You NEVER need to enter PIN to RECEIVE money. PIN is only for sending.
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="glass-card scam-card" style="border-color:var(--neon-gold);background:rgba(246,173,85,0.05);">
+        <h5 style="color:var(--neon-gold);font-weight:700;">📞 Vishing / Phone Scams</h5>
+        <ul class="text-secondary mt-2 mb-0" style="font-size:0.875rem;line-height:1.8;padding-left:20px;">
+          <li>Fake bank employee calls asking for OTP</li>
+          <li>KYC update urgency scams</li>
+          <li>Loan approval calls asking for processing fee</li>
+          <li>Income tax refund fraud calls</li>
+        </ul>
+        <div class="mt-3 p-2" style="background:rgba(246,173,85,0.1);border-radius:8px;font-size:0.8rem;color:var(--neon-gold);">
+          🛡️ <strong>Safe Rule:</strong> Banks will NEVER ask for OTP/PIN/CVV on calls. Hang up immediately.
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="glass-card scam-card" style="border-color:var(--neon-purple);background:rgba(159,122,234,0.05);">
+        <h5 style="color:var(--neon-purple);font-weight:700;">💻 Online Investment Scams</h5>
+        <ul class="text-secondary mt-2 mb-0" style="font-size:0.875rem;line-height:1.8;padding-left:20px;">
+          <li>"Double your money" schemes</li>
+          <li>Fake Telegram/WhatsApp investment groups</li>
+          <li>Unregistered stock market advisors</li>
+          <li>Ponzi/MLM financial schemes</li>
+        </ul>
+        <div class="mt-3 p-2" style="background:rgba(159,122,234,0.1);border-radius:8px;font-size:0.8rem;color:var(--neon-purple);">
+          🛡️ <strong>Safe Rule:</strong> Check SEBI registration at sebi.gov.in. No guaranteed investment returns exist.
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="glass-card scam-card" style="border-color:var(--neon-cyan);background:rgba(79,209,197,0.05);">
+        <h5 style="color:var(--neon-cyan);font-weight:700;">🔄 SIM Swap Fraud</h5>
+        <ul class="text-secondary mt-2 mb-0" style="font-size:0.875rem;line-height:1.8;padding-left:20px;">
+          <li>Criminal gets duplicate SIM for your number</li>
+          <li>Intercepts all OTPs and banking alerts</li>
+          <li>Drains your accounts within hours</li>
+          <li>Uses social engineering with telecom companies</li>
+        </ul>
+        <div class="mt-3 p-2" style="background:rgba(79,209,197,0.1);border-radius:8px;font-size:0.8rem;color:var(--neon-cyan);">
+          🛡️ <strong>Safe Rule:</strong> If your SIM stops working suddenly, call bank immediately and block account.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Red Flags Checklist -->
+  <div class="glass-card p-4 mb-5">
+    <h5 style="font-weight:700;margin-bottom:20px;">🚩 Red Flag Checklist</h5>
+    <div class="row g-3">
+      {% set flags = [
+        ("Someone asks for your OTP or PIN", True),
+        ("Offer of 'guaranteed returns' above 15%", True),
+        ("Urgent request to 'verify your account'", True),
+        ("Request to install AnyDesk / TeamViewer", True),
+        ("Unknown link claiming to be your bank", True),
+        ("'Won lottery/prize' message from unknown", True),
+        ("Call from 'bank executive' asking for CVV", True),
+        ("WhatsApp group promising stock tips", True),
+      ] %}
+      {% for flag, is_danger in flags %}
+      <div class="col-md-6">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(245,101,101,0.06);border-radius:8px;border:1px solid rgba(245,101,101,0.2);">
+          <span style="color:#fc8181;font-size:1.1rem;">🚩</span>
+          <span style="font-size:0.875rem;color:var(--text-secondary);">{{ flag }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- If Scammed -->
+  <div class="alert-scam p-4 mb-5" style="border-radius:var(--radius-lg);">
+    <h5 style="color:#fc8181;font-weight:700;margin-bottom:12px;">📋 If You've Been Scammed – Act Immediately!</h5>
+    <div class="row g-3">
+      <div class="col-md-3 text-center">
+        <div style="font-size:1.5rem;margin-bottom:6px;">1️⃣</div>
+        <div style="font-size:0.875rem;font-weight:600;">Call 1930</div>
+        <div class="text-muted" style="font-size:0.78rem;">Cyber Crime Helpline</div>
+      </div>
+      <div class="col-md-3 text-center">
+        <div style="font-size:1.5rem;margin-bottom:6px;">2️⃣</div>
+        <div style="font-size:0.875rem;font-weight:600;">Block Your Cards</div>
+        <div class="text-muted" style="font-size:0.78rem;">Call bank 24x7 helpline immediately</div>
+      </div>
+      <div class="col-md-3 text-center">
+        <div style="font-size:1.5rem;margin-bottom:6px;">3️⃣</div>
+        <div style="font-size:0.875rem;font-weight:600;">File Complaint</div>
+        <div class="text-muted" style="font-size:0.78rem;"><a href="https://cybercrime.gov.in" target="_blank" style="color:var(--neon-blue);">cybercrime.gov.in</a></div>
+      </div>
+      <div class="col-md-3 text-center">
+        <div style="font-size:1.5rem;margin-bottom:6px;">4️⃣</div>
+        <div style="font-size:0.875rem;font-weight:600;">RBI Ombudsman</div>
+        <div class="text-muted" style="font-size:0.78rem;">Helpline: 14448</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+async function checkScam() {
+  const text = document.getElementById('scamText').value.trim();
+  if (!text) { alert('Please enter a message to check'); return; }
+  
+  const resultDiv = document.getElementById('scamResult');
+  resultDiv.style.display = 'block';
+  resultDiv.style.background = 'rgba(255, 255, 255, 0.05)';
+  resultDiv.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+  resultDiv.innerHTML = `<div class="d-flex align-items-center gap-2">
+    <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+    <span style="font-size:0.875rem;color:var(--text-secondary);">Analyzing message for financial fraud indicators...</span>
+  </div>`;
+
+  try {
+    const res = await fetch('/api/scam-check?t=' + Date.now(), { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ text }) 
+    });
+    const data = await res.json();
+    if (data.is_potential_scam) {
+      resultDiv.style.background = 'rgba(245,101,101,0.12)';
+      resultDiv.style.border = '1px solid rgba(245,101,101,0.4)';
+      resultDiv.innerHTML = `<div style="color:#fc8181;font-weight:700;font-size:1.1rem;margin-bottom:8px;">🚨 POTENTIAL SCAM DETECTED</div>
+        <p style="color:var(--text-secondary);font-size:0.875rem;">${data.warning}</p>
+        <p style="font-size:0.875rem;">📞 If you have already shared information, call <strong style="color:#fc8181;font-size:1.1rem;">1930</strong> (Cyber Crime Helpline) IMMEDIATELY.</p>
+        <a href="https://cybercrime.gov.in" target="_blank" class="btn-neon" style="background:var(--gradient-danger);display:inline-block;margin-top:8px;font-size:0.85rem;padding:8px 20px;">File Complaint at cybercrime.gov.in</a>`;
+    } else {
+      resultDiv.style.background = 'rgba(72,187,120,0.08)';
+      resultDiv.style.border = '1px solid rgba(72,187,120,0.3)';
+      resultDiv.innerHTML = `<div style="color:var(--neon-green);font-weight:700;font-size:1rem;margin-bottom:8px;">✅ No obvious scam patterns detected</div>
+        <p style="color:var(--text-secondary);font-size:0.875rem;">However, always stay vigilant. If something feels off, trust your instincts and do NOT share any financial information. You can ask Fin-Lit-Tutor AI for more analysis.</p>`;
+    }
+  } catch (err) {
+    resultDiv.style.background = 'rgba(245,101,101,0.08)';
+    resultDiv.style.border = '1px solid rgba(245,101,101,0.3)';
+    resultDiv.innerHTML = `<div style="color:#fc8181;font-weight:700;font-size:1rem;margin-bottom:8px;">❌ Connection Error</div>
+      <p style="color:var(--text-secondary);font-size:0.875rem;">Could not connect to the scam check service. Please try again.</p>`;
+  }
+}
+
+// Auto-reset results div when the user modifies the text
+document.getElementById('scamText').addEventListener('input', function() {
+  const resultDiv = document.getElementById('scamResult');
+  resultDiv.style.display = 'none';
+  resultDiv.innerHTML = '';
+});
+</script>
+</body>
+</html>

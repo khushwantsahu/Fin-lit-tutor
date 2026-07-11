@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – Fin-Lit-Tutor</title>
+  <meta name="description" content="Your personal financial literacy dashboard">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+</head>
+
+<body>
+
+<!-- Sidebar & Topbar (partials) -->
+{% include 'partials/sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<!-- ── Page shell ─────────────────────────────────────────── -->
+<div class="ds-layout">
+<main class="ds-main" id="mainContent">
+
+  <!-- ══ GREETING ══════════════════════════════════════════════ -->
+  <section class="ds-greeting" id="greetingWidget" aria-label="Welcome banner">
+    <div class="ds-greeting__text">
+      <p class="ds-greeting__sub">Welcome back,</p>
+      <h1 class="ds-greeting__name">{{ user.name }} <span aria-hidden="true">👋</span></h1>
+      <p class="ds-greeting__meta">
+        <span class="ds-xp-badge" id="xpPoints">
+          <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+          {{ user.xp_points or 0 }} XP
+        </span>
+        &nbsp;— keep learning to unlock achievements!
+      </p>
+    </div>
+    <div class="ds-greeting__actions d-flex gap-2 align-items-center">
+      <a href="{{ url_for('chat.chat_page') }}" class="ds-greeting__cta" aria-label="Open AI Chatbot">
+        <i class="fa-solid fa-comment-dots" aria-hidden="true"></i>
+        <span>Ask Fin-Lit-Tutor AI</span>
+        <i class="fa-solid fa-arrow-right ds-greeting__cta-arrow" aria-hidden="true"></i>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══ KPI STATS ══════════════════════════════════════════════ -->
+  <section class="ds-stats" aria-label="Activity summary">
+    <article class="ds-stat-card" aria-label="Total conversations">
+      <div class="ds-stat-card__icon ds-stat-card__icon--blue">
+        <i class="fa-solid fa-comments" aria-hidden="true"></i>
+      </div>
+      <div class="ds-stat-card__body">
+        <div class="ds-stat-card__value" id="statSessions">–</div>
+        <div class="ds-stat-card__label">Conversations</div>
+      </div>
+      <div class="ds-stat-card__trend" aria-hidden="true">
+        <i class="fa-solid fa-arrow-trend-up"></i>
+      </div>
+    </article>
+
+    <article class="ds-stat-card" aria-label="Questions asked">
+      <div class="ds-stat-card__icon ds-stat-card__icon--gold">
+        <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+      </div>
+      <div class="ds-stat-card__body">
+        <div class="ds-stat-card__value ds-stat-card__value--gold" id="statMessages">–</div>
+        <div class="ds-stat-card__label">Questions Asked</div>
+      </div>
+      <div class="ds-stat-card__trend" aria-hidden="true">
+        <i class="fa-solid fa-arrow-trend-up"></i>
+      </div>
+    </article>
+
+    <article class="ds-stat-card" aria-label="Topics completed">
+      <div class="ds-stat-card__icon ds-stat-card__icon--green">
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+      </div>
+      <div class="ds-stat-card__body">
+        <div class="ds-stat-card__value ds-stat-card__value--green" id="statTopics">–</div>
+        <div class="ds-stat-card__label">Topics Completed</div>
+      </div>
+      <div class="ds-stat-card__trend" aria-hidden="true">
+        <i class="fa-solid fa-arrow-trend-up"></i>
+      </div>
+    </article>
+
+    <article class="ds-stat-card" aria-label="Achievements earned">
+      <div class="ds-stat-card__icon ds-stat-card__icon--purple">
+        <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+      </div>
+      <div class="ds-stat-card__body">
+        <div class="ds-stat-card__value ds-stat-card__value--purple" id="statAchievements">–</div>
+        <div class="ds-stat-card__label">Achievements</div>
+      </div>
+      <div class="ds-stat-card__trend" aria-hidden="true">
+        <i class="fa-solid fa-star"></i>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══ WORKSPACE GRID ════════════════════════════════════════ -->
+  <div class="ds-workspace-grid">
+    
+    <!-- ── Left Workspace Column ── -->
+    <div class="ds-workspace-left">
+      
+      <!-- Featured Tools -->
+      <section id="featuredToolsWidget" aria-labelledby="featuredToolsHeading">
+        <h2 class="ds-section-heading" id="featuredToolsHeading">
+          <i class="fa-solid fa-star text-neon-gold" aria-hidden="true"></i> Featured Tools
+        </h2>
+        <div class="ds-featured-grid">
+          <!-- AI Chatbot Card -->
+          <a href="{{ url_for('chat.chat_page') }}" class="ds-featured-card ds-featured-card--chat" aria-label="Open AI Chatbot">
+            <div class="ds-featured-card__icon ds-featured-card__icon--blue">
+              <i class="fa-solid fa-robot" aria-hidden="true"></i>
+            </div>
+            <div class="ds-featured-card__content">
+              <div class="ds-featured-card__title">AI Chatbot</div>
+              <p class="ds-featured-card__desc">Ask financial questions, plan savings, and get advice in any language instantly.</p>
+              <span class="ds-featured-card__action">Chat Now <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+            </div>
+          </a>
+          
+          <!-- Budget Planner Card -->
+          <a href="{{ url_for('modules.budget_planner') }}" class="ds-featured-card ds-featured-card--budget" aria-label="Open Budget Planner">
+            <div class="ds-featured-card__icon ds-featured-card__icon--gold">
+              <i class="fa-solid fa-wallet" aria-hidden="true"></i>
+            </div>
+            <div class="ds-featured-card__content">
+              <div class="ds-featured-card__title">Smart Budget Planner</div>
+              <p class="ds-featured-card__desc">Apply the 50-30-20 rule to organize your monthly income into savings, needs, and wants.</p>
+              <span class="ds-featured-card__action">Plan Income <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+            </div>
+          </a>
+          
+          <!-- Scam Checker Card -->
+          <a href="{{ url_for('modules.scam_awareness') }}" class="ds-featured-card ds-featured-card--scam" aria-label="Open Scam Awareness Center">
+            <div class="ds-featured-card__icon ds-featured-card__icon--red">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            </div>
+            <div class="ds-featured-card__content">
+              <div class="ds-featured-card__title">Scam Checker</div>
+              <p class="ds-featured-card__desc">Paste suspicious SMS, email, or WhatsApp messages to check if they show signs of fraud.</p>
+              <span class="ds-featured-card__action">Check Safety <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Additional Financial Tools -->
+      <section aria-labelledby="otherToolsHeading">
+        <h2 class="ds-section-heading" id="otherToolsHeading">
+          <i class="fa-solid fa-ellipsis" aria-hidden="true"></i> Additional Tools
+        </h2>
+        <div class="ds-additional-grid">
+          <!-- EMI Calculator -->
+          <a href="{{ url_for('modules.emi_calculator') }}" class="ds-module-card ds-module-card--green" aria-label="Open EMI Calculator">
+            <div class="ds-module-card__icon">
+              <i class="fa-solid fa-landmark" aria-hidden="true"></i>
+            </div>
+            <div class="ds-module-card__body">
+              <div class="ds-module-card__title">EMI Calculator</div>
+              <div class="ds-module-card__sub">Amortization schedules</div>
+            </div>
+            <i class="fa-solid fa-chevron-right ds-module-card__arrow" aria-hidden="true"></i>
+          </a>
+
+          <!-- Gov Schemes -->
+          <a href="{{ url_for('modules.government_schemes') }}" class="ds-module-card ds-module-card--pink" aria-label="Browse Government Schemes">
+            <div class="ds-module-card__icon">
+              <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
+            </div>
+            <div class="ds-module-card__body">
+              <div class="ds-module-card__title">Gov Schemes</div>
+              <div class="ds-module-card__sub">PMJDY, APY, MUDRA...</div>
+            </div>
+            <i class="fa-solid fa-chevron-right ds-module-card__arrow" aria-hidden="true"></i>
+          </a>
+
+          <!-- Achievements -->
+          <a href="{{ url_for('modules.achievements') }}" class="ds-module-card ds-module-card--gold" aria-label="View Achievements">
+            <div class="ds-module-card__icon">
+              <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+            </div>
+            <div class="ds-module-card__body">
+              <div class="ds-module-card__title">Achievements</div>
+              <div class="ds-module-card__sub">Badges &amp; certificates</div>
+            </div>
+            <i class="fa-solid fa-chevron-right ds-module-card__arrow" aria-hidden="true"></i>
+          </a>
+        </div>
+      </section>
+
+      <!-- Smart Budget Health Widget -->
+      <section class="ds-card ds-widget-card" id="budgetWidget" aria-labelledby="budgetWidgetHeading">
+        <h2 class="ds-card__heading" id="budgetWidgetHeading">
+          <i class="fa-solid fa-chart-pie text-neon-gold" aria-hidden="true"></i> Budget Health
+        </h2>
+        
+        <!-- Empty State -->
+        <div id="budgetWidgetEmpty" class="ds-widget-empty">
+          <div class="ds-widget-empty__icon">📊</div>
+          <p class="ds-widget-empty__text">No active budget found. Set up your monthly income to see your smart budget guidelines.</p>
+          <a href="{{ url_for('modules.budget_planner') }}" class="ds-widget-empty__btn btn-gold">
+            <i class="fa-solid fa-calculator" aria-hidden="true"></i> Open Budget Planner
+          </a>
+        </div>
+        
+        <!-- Active State -->
+        <div id="budgetWidgetActive" class="ds-widget-active" style="display: none;">
+          <div class="ds-budget-summary-header mb-3">
+            <div>
+              <span class="ds-budget-summary-label">Monthly Income</span>
+              <div class="ds-budget-summary-value" id="budgetIncomeValue">₹0</div>
+            </div>
+            <a href="{{ url_for('modules.budget_planner') }}" class="btn-neon-outline px-3 py-1.5" style="font-size: 0.78rem;">
+              <i class="fa-solid fa-redo" aria-hidden="true"></i> Adjust Income
+            </a>
+          </div>
+          
+          <div class="ds-budget-bars">
+            <!-- Needs -->
+            <div class="ds-budget-bar-item">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="ds-budget-bar-label"><i class="fa-solid fa-basket-shopping text-neon-blue" aria-hidden="true"></i> Needs (50% Essential)</span>
+                <span class="ds-budget-bar-value" id="budgetNeedsValue">₹0</span>
+              </div>
+              <div class="ds-progress-track">
+                <div class="ds-progress-fill" style="width: 50%; background: var(--gradient-blue);"></div>
+              </div>
+            </div>
+            <!-- Wants -->
+            <div class="ds-budget-bar-item mt-3">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="ds-budget-bar-label"><i class="fa-solid fa-gamepad text-neon-gold" aria-hidden="true"></i> Wants (30% Lifestyle)</span>
+                <span class="ds-budget-bar-value" id="budgetWantsValue">₹0</span>
+              </div>
+              <div class="ds-progress-track">
+                <div class="ds-progress-fill" style="width: 30%; background: var(--gradient-gold);"></div>
+              </div>
+            </div>
+            <!-- Savings -->
+            <div class="ds-budget-bar-item mt-3">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="ds-budget-bar-label"><i class="fa-solid fa-vault text-neon-green" aria-hidden="true"></i> Savings &amp; Investments (20% Future)</span>
+                <span class="ds-budget-bar-value" id="budgetSavingsValue">₹0</span>
+              </div>
+              <div class="ds-progress-track">
+                <div class="ds-progress-fill" style="width: 20%; background: var(--gradient-green);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Learning Progress Widget -->
+      <section class="ds-card ds-widget-card" id="learningWidget" aria-labelledby="learningWidgetHeading">
+        <h2 class="ds-card__heading" id="learningWidgetHeading">
+          <i class="fa-solid fa-graduation-cap text-neon-blue" aria-hidden="true"></i> Learning Roadmap
+        </h2>
+        <div class="ds-learning-progress-wrap">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="ds-learning-progress-label">Modules Completed</span>
+            <span class="ds-learning-progress-pct" id="learningProgressPct">0%</span>
+          </div>
+          <div class="ds-progress-track mb-3">
+            <div class="ds-progress-fill" id="learningProgressBar" style="width: 0%;"></div>
+          </div>
+          <div class="ds-learning-roadmap-card">
+            <div class="ds-learning-roadmap-card__tag">Next Milestone</div>
+            <div class="ds-learning-roadmap-card__title" id="learningRoadmapNext">Intro to Financial Literacy</div>
+            <p class="ds-learning-roadmap-card__desc">Complete topics and test your knowledge to earn badges and climb achievements.</p>
+            <a href="{{ url_for('modules.learning_dashboard') }}" class="btn-neon-outline px-3 py-1.5" style="font-size: 0.78rem;">
+              <i class="fa-solid fa-play" aria-hidden="true"></i> Resume Learning
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /ds-workspace-left -->
+
+    <!-- ── Right Workspace Column ── -->
+    <div class="ds-workspace-right">
+      
+      <!-- Financial Score Card -->
+      <section class="ds-card ds-health-widget" id="healthWidget" aria-labelledby="healthWidgetHeading">
+        <h2 class="ds-card__heading" id="healthWidgetHeading">
+          <i class="fa-solid fa-landmark text-neon-cyan" aria-hidden="true"></i> Financial Score
+        </h2>
+        
+        <!-- Empty State -->
+        <div id="healthWidgetEmpty" class="ds-widget-empty">
+          <div class="ds-widget-empty__icon">📊</div>
+          <p class="ds-widget-empty__text">Calculate your financial score (0–100) and unlock personalized recommendations.</p>
+          <a href="{{ url_for('modules.health_score') }}" class="ds-widget-empty__btn btn-green">
+            <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i> Check Financial Score
+          </a>
+        </div>
+        
+        <!-- Active State -->
+        <div id="healthWidgetActive" class="ds-widget-active" style="display: none;">
+          <div class="ds-health-score-container text-center mb-3">
+            <div class="ds-health-gauge-wrap">
+              <svg class="ds-health-gauge-svg" viewBox="0 0 100 100">
+                <circle class="ds-health-gauge-bg" cx="50" cy="50" r="40" stroke-width="8" fill="none"></circle>
+                <circle class="ds-health-gauge-fill" id="healthGaugeFill" cx="50" cy="50" r="40" stroke-width="8" fill="none" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+              </svg>
+              <div class="ds-health-gauge-text">
+                <span class="ds-health-score-value" id="healthScoreNum">0</span>
+                <span class="ds-health-score-max">/100</span>
+              </div>
+            </div>
+            <div class="mt-2">
+              <span class="badge-fin" id="healthStatusBadge">Excellent</span>
+            </div>
+          </div>
+          
+          <div class="ds-health-metrics-row mb-3">
+            <div class="ds-health-metric-box">
+              <div class="ds-health-metric-val" id="healthSavingsRate">0%</div>
+              <div class="ds-health-metric-lbl">Savings Rate</div>
+            </div>
+            <div class="ds-health-metric-box">
+              <div class="ds-health-metric-val" id="healthDebtRatio">0%</div>
+              <div class="ds-health-metric-lbl">Debt Ratio</div>
+            </div>
+            <div class="ds-health-metric-box">
+              <div class="ds-health-metric-val" id="healthEmergencyFund">0 mo</div>
+              <div class="ds-health-metric-lbl">Emergency</div>
+            </div>
+          </div>
+          
+          <div class="ds-health-actions-section mb-2">
+            <div class="ds-health-actions-label"><i class="fa-solid fa-lightbulb text-neon-gold" aria-hidden="true"></i> Recommended Actions</div>
+            <ul class="ds-health-actions-list" id="healthRecsList">
+              <!-- Populated by JS -->
+            </ul>
+          </div>
+          
+          <a href="{{ url_for('modules.health_score') }}" class="ds-card__link-btn w-100 mt-2 justify-content-center">
+            <i class="fa-solid fa-redo" aria-hidden="true"></i> Recalculate Score
+          </a>
+        </div>
+      </section>
+
+      <!-- Financial Level -->
+      <section class="ds-card ds-level-card" id="levelWidget" aria-labelledby="levelHeading">
+        <h2 class="ds-card__heading" id="levelHeading">
+          <i class="fa-solid fa-chart-line text-neon-gold" aria-hidden="true"></i>
+          Financial Level
+        </h2>
+
+        <div class="ds-level-card__hero">
+          <div class="ds-level-card__badge" aria-hidden="true">
+            {% if user.financial_level == 'advanced' %}🌳
+            {% elif user.financial_level == 'intermediate' %}🌿
+            {% else %}🌱{% endif %}
+          </div>
+          <div class="ds-level-card__info">
+            <div class="ds-level-card__name">{{ (user.financial_level or 'Beginner') | capitalize }}</div>
+            <div class="ds-level-card__xp" id="levelXP">
+              {{ user.xp_points or 0 }} XP earned
+            </div>
+          </div>
+        </div>
+
+        <!-- XP progress bar -->
+        <div class="ds-level-card__progress-wrap">
+          <div class="ds-level-card__progress-labels">
+            <span>Progress to next milestone</span>
+            <span id="levelPct">
+              {% if user.financial_level == 'advanced' %}90%
+              {% elif user.financial_level == 'intermediate' %}55%
+              {% else %}25%{% endif %}
+            </span>
+          </div>
+          <div class="ds-progress-track" id="levelProgressTrack" role="progressbar"
+               aria-valuenow="{% if user.financial_level == 'advanced' %}90{% elif user.financial_level == 'intermediate' %}55{% else %}25{% endif %}"
+               aria-valuemin="0" aria-valuemax="100">
+            <div class="ds-progress-fill" id="levelProgressBar"></div>
+          </div>
+        </div>
+
+        <!-- Milestones -->
+        <div class="ds-level-card__milestones">
+          <div class="ds-milestone {% if (user.xp_points or 0) >= 100 %}is-done{% endif %}">
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            <span>First chat (100 XP)</span>
+          </div>
+          <div class="ds-milestone {% if (user.xp_points or 0) >= 300 %}is-done{% endif %}">
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            <span>Budget plan (300 XP)</span>
+          </div>
+          <div class="ds-milestone {% if (user.xp_points or 0) >= 500 %}is-done{% endif %}">
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            <span>Intermediate level (500 XP)</span>
+          </div>
+        </div>
+
+        <!-- Level Recommended Actions -->
+        <div class="ds-level-recs">
+          <div class="ds-level-recs__label"><i class="fa-solid fa-tasks text-neon-blue" aria-hidden="true"></i> Recommended Actions</div>
+          <ul class="ds-level-recs__list">
+            {% if user.financial_level == 'advanced' %}
+            <li>Maintain 6 months of emergency fund.</li>
+            <li>Explore tax-saving investments under 80C (PPF/NPS).</li>
+            {% elif user.financial_level == 'intermediate' %}
+            <li>Calculate your Financial Score.</li>
+            <li>Apply basic insurance protections (PMJJBY/PMSBY).</li>
+            {% else %}
+            <li>Ask Fin-Lit-Tutor AI 3 basic banking questions.</li>
+            <li>Create a monthly budget plan using Budget Planner.</li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <a href="{{ url_for('auth.profile') }}" class="ds-card__link-btn w-100 justify-content-center">
+          <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+          Update Profile
+        </a>
+      </section>
+
+      <!-- Emergency Contacts -->
+      <section class="ds-card ds-emergency-card" id="emergencyWidget" aria-labelledby="emergencyHeading">
+        <h2 class="ds-card__heading" id="emergencyHeading">
+          <i class="fa-solid fa-triangle-exclamation text-neon-pink" aria-hidden="true"></i>
+          Emergency Helpline
+        </h2>
+
+        <!-- Primary helpline — pulse glow -->
+        <div class="ds-emergency-primary" role="article" aria-label="Cyber Crime Helpline">
+          <div class="ds-emergency-primary__label">
+            <i class="fa-solid fa-phone-volume" aria-hidden="true"></i>
+            Cyber Crime Helpline
+          </div>
+          <div class="ds-emergency-primary__flex">
+            <a href="tel:1930" class="ds-emergency-primary__number" aria-label="Call 1930">
+              1930
+            </a>
+            <a href="tel:1930" class="ds-emergency-call-btn" aria-label="Call 1930 now">
+              <i class="fa-solid fa-phone" aria-hidden="true"></i> Call
+            </a>
+          </div>
+          <p class="ds-emergency-primary__note">
+            Call immediately if you suspect digital fraud or have shared OTP/PIN.
+          </p>
+        </div>
+
+        <!-- Secondary contacts -->
+        <ul class="ds-emergency-list" aria-label="Other emergency contacts">
+          <li class="ds-emergency-item ds-emergency-item--blue">
+            <div class="ds-emergency-item__info-flex">
+              <div class="ds-emergency-item__icon">
+                <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+              </div>
+              <div class="ds-emergency-item__body">
+                <span class="ds-emergency-item__title">RBI Ombudsman</span>
+                <span class="ds-emergency-item__sub">Banking complaints</span>
+              </div>
+            </div>
+            <div class="ds-emergency-item__action">
+              <a href="tel:14448" class="ds-emergency-call-btn ds-emergency-call-btn--green" aria-label="Call RBI Ombudsman 14448">
+                <i class="fa-solid fa-phone" aria-hidden="true"></i> Call
+              </a>
+            </div>
+          </li>
+
+          <li class="ds-emergency-item ds-emergency-item--green">
+            <div class="ds-emergency-item__info-flex">
+              <div class="ds-emergency-item__icon">
+                <i class="fa-solid fa-globe" aria-hidden="true"></i>
+              </div>
+              <div class="ds-emergency-item__body">
+                <span class="ds-emergency-item__title">Cyber Portal</span>
+                <span class="ds-emergency-item__sub">Online complaints</span>
+              </div>
+            </div>
+            <div class="ds-emergency-item__action">
+              <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer"
+                 class="ds-emergency-item__link" aria-label="Visit cybercrime.gov.in">
+                Visit <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+              </a>
+            </div>
+          </li>
+
+          <li class="ds-emergency-item ds-emergency-item--gold">
+            <div class="ds-emergency-item__info-flex">
+              <div class="ds-emergency-item__icon">
+                <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+              </div>
+              <div class="ds-emergency-item__body">
+                <span class="ds-emergency-item__title">SEBI SCORES</span>
+                <span class="ds-emergency-item__sub">Investor complaints</span>
+              </div>
+            </div>
+            <div class="ds-emergency-item__action">
+              <a href="https://scores.sebi.gov.in" target="_blank" rel="noopener noreferrer"
+                 class="ds-emergency-item__link" aria-label="Visit SEBI SCORES">
+                Visit <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+              </a>
+            </div>
+          </li>
+        </ul>
+
+        <div class="ds-emergency-tip" role="note">
+          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+          <span>Never share your OTP, PIN, or CVV with <strong>anyone</strong> — including bank staff.</span>
+        </div>
+      </section>
+
+    </div><!-- /ds-workspace-right -->
+  </div><!-- /ds-workspace-grid -->
+
+</main>
+</div><!-- /ds-layout -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  /* ── Load analytics from the existing API endpoint (unchanged) ── */
+  try {
+    const res  = await fetch('/api/analytics/user');
+    const data = await res.json();
+
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+
+    set('statSessions',     data.total_sessions);
+    set('statMessages',     data.total_messages);
+    set('statTopics',       data.completed_topics);
+    set('statAchievements', data.achievements);
+    set('xpPoints',         data.xp_points + ' XP');
+    set('levelXP',          data.xp_points + ' XP earned');
+
+    // ── Load Financial Health Score from localStorage ──
+    const scoreData = localStorage.getItem('finHealthScore');
+    if (scoreData) {
+      try {
+        const hs = JSON.parse(scoreData);
+        document.getElementById('healthWidgetEmpty').style.display = 'none';
+        document.getElementById('healthWidgetActive').style.display = 'block';
+        
+        // Animating the score count
+        const scoreValEl = document.getElementById('healthScoreNum');
+        const target = parseInt(hs.score, 10) || 0;
+        let cur = 0;
+        const speed = Math.max(1, Math.ceil(target / 30));
+        const timer = setInterval(() => {
+          cur = Math.min(cur + speed, target);
+          if (scoreValEl) scoreValEl.textContent = cur;
+          if (cur >= target) clearInterval(timer);
+        }, 20);
+
+        // Update Gauge Ring SVG dashoffset
+        const fill = document.getElementById('healthGaugeFill');
+        if (fill) {
+          const radius = 40;
+          const circ = 2 * Math.PI * radius; // ~251.2
+          fill.style.strokeDasharray = circ;
+          fill.style.strokeDashoffset = circ;
+          
+          const pct = target / 100;
+          const offset = circ - (pct * circ);
+          setTimeout(() => {
+            fill.style.strokeDashoffset = offset;
+          }, 150);
+          
+          // Color coding for gauge fill
+          if (target >= 80) fill.style.stroke = '#48bb78';
+          else if (target >= 60) fill.style.stroke = '#f6ad55';
+          else fill.style.stroke = '#fc8181';
+        }
+
+        // Update badge
+        const badge = document.getElementById('healthStatusBadge');
+        if (badge) {
+          badge.textContent = target >= 80 ? 'Excellent' : target >= 60 ? 'Fair' : 'Needs Work';
+          badge.className = 'badge-fin ' + (target >= 80 ? 'badge-success' : target >= 60 ? 'badge-warning' : 'badge-danger');
+        }
+
+        // Metrics
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = val;
+        };
+        setVal('healthSavingsRate', hs.savings_rate + '%');
+        setVal('healthDebtRatio', hs.debt_to_income + '%');
+        setVal('healthEmergencyFund', hs.emergency_fund_months + ' mo');
+
+        // Recommendations List
+        const recList = document.getElementById('healthRecsList');
+        if (recList && hs.recommendations) {
+          recList.innerHTML = hs.recommendations.map(r => `<li>${r}</li>`).join('');
+        }
+      } catch (err) {
+        console.error('Error loading finHealthScore:', err);
+      }
+    }
+
+    // ── Load Budget Plan from localStorage ──
+    const budgetData = localStorage.getItem('finBudget');
+    if (budgetData) {
+      try {
+        const bd = JSON.parse(budgetData);
+        document.getElementById('budgetWidgetEmpty').style.display = 'none';
+        document.getElementById('budgetWidgetActive').style.display = 'block';
+
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = val;
+        };
+        setVal('budgetIncomeValue', '₹' + parseInt(bd.monthly_income).toLocaleString('en-IN'));
+        setVal('budgetNeedsValue', '₹' + Math.round(bd.needs).toLocaleString('en-IN'));
+        setVal('budgetWantsValue', '₹' + Math.round(bd.wants).toLocaleString('en-IN'));
+        setVal('budgetSavingsValue', '₹' + Math.round(bd.savings).toLocaleString('en-IN'));
+      } catch (err) {
+        console.error('Error loading finBudget:', err);
+      }
+    }
+
+    // ── Update Learning Roadmap dynamically ──
+    if (data.completed_topics !== undefined) {
+      const totalTopics = 8;
+      const compPct = Math.min(100, Math.round((data.completed_topics / totalTopics) * 100));
+      
+      const pctEl = document.getElementById('learningProgressPct');
+      if (pctEl) pctEl.textContent = compPct + '%';
+      
+      const barEl = document.getElementById('learningProgressBar');
+      if (barEl) {
+        barEl.style.width = '0%';
+        barEl.className = 'ds-progress-fill';
+        barEl.style.background = 'var(--gradient-blue)';
+        requestAnimationFrame(() => {
+          barEl.style.transition = 'width 1s ease';
+          barEl.style.width = compPct + '%';
+        });
+      }
+
+      // Roadmap Next suggestion
+      const roadmapNext = document.getElementById('learningRoadmapNext');
+      if (roadmapNext) {
+        if (data.completed_topics === 0) {
+          roadmapNext.textContent = 'Topic 1: Smart Banking & Savings';
+        } else if (data.completed_topics === 1) {
+          roadmapNext.textContent = 'Topic 2: Budgeting & Expense Control';
+        } else if (data.completed_topics === 2) {
+          roadmapNext.textContent = 'Topic 3: Understanding Loans & Interest';
+        } else if (data.completed_topics === 3) {
+          roadmapNext.textContent = 'Topic 4: Financial Score Check';
+        } else if (data.completed_topics === 4) {
+          roadmapNext.textContent = 'Topic 5: Protecting Against Scams';
+        } else {
+          roadmapNext.textContent = 'Topic 6: Government Savings Schemes';
+        }
+      }
+    }
+
+    /* Animate stat numbers in */
+    document.querySelectorAll('.ds-stat-card__value').forEach(el => {
+      const target = parseInt(el.textContent, 10);
+      if (isNaN(target) || target === 0) return;
+      let current = 0;
+      const step = Math.max(1, Math.ceil(target / 40));
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = current;
+        if (current >= target) clearInterval(timer);
+      }, 30);
+    });
+
+  } catch (e) {
+    console.error('[Dashboard] analytics fetch failed:', e);
+  }
+
+  /* ── Animate progress bar on load ── */
+  document.querySelectorAll('.ds-progress-fill').forEach(bar => {
+    if (bar.id === 'learningProgressBar') return; // Handled separately
+    if (bar.id === 'levelProgressBar') {
+      const track = document.getElementById('levelProgressTrack');
+      const val = track ? track.getAttribute('aria-valuenow') : '25';
+      bar.style.width = '0%';
+      requestAnimationFrame(() => {
+        bar.style.transition = 'width 1.1s cubic-bezier(0.4,0,0.2,1)';
+        bar.style.width = val + '%';
+      });
+      return;
+    }
+    const target = bar.style.width;
+    bar.style.width = '0';
+    requestAnimationFrame(() => {
+      bar.style.transition = 'width 1.1s cubic-bezier(0.4,0,0.2,1)';
+      bar.style.width = target;
+    });
+  });
+
+  /* ── Staggered entrance for all cards ── */
+  const cards = document.querySelectorAll('.ds-module-card, .ds-featured-card, .ds-card, .ds-stat-card');
+  cards.forEach((card, i) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(16px)';
+    setTimeout(() => {
+      card.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, 40 + i * 45);
+  });
+});
+
+
+</script>
+</body>
+</html>

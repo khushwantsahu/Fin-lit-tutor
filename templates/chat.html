@@ -1,0 +1,958 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fin-Lit-Tutor Chat – AI Financial Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <style>
+    body { overflow: hidden; }
+    .chat-layout { display: flex; height: 100vh; padding-top: 60px; }
+    /* Sidebar */
+    .chat-sidebar {
+      width: 280px;
+      background: rgba(5,10,24,0.95);
+      border-right: 1px solid var(--border-glass);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .chat-sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-glass);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sessions-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .session-item {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid transparent;
+      margin-bottom: 4px;
+    }
+    .session-item:hover { background: rgba(255,255,255,0.05); border-color: var(--border-glass); }
+    .session-item.active { background: rgba(102,126,234,0.12); border-color: rgba(102,126,234,0.3); }
+    .session-title { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .session-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    /* Main Chat */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-primary);
+    }
+    .chat-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-glass);
+      background: rgba(5,10,24,0.9);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .ai-avatar {
+      width: 40px; height: 40px;
+      background: var(--gradient-main);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .ai-status { width: 8px; height: 8px; background: var(--neon-green); border-radius: 50%; display: inline-block; animation: pulse-glow 1.5s infinite; }
+    /* Messages */
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .message-row { display: flex; gap: 12px; max-width: 820px; }
+    .message-row.user { flex-direction: row-reverse; margin-left: auto; }
+    .msg-avatar {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .msg-avatar.ai { background: var(--gradient-main); }
+    .msg-avatar.user { background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); }
+    .message-bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      max-width: 680px;
+      font-size: 0.925rem;
+      line-height: 1.65;
+      position: relative;
+    }
+    .message-bubble.ai {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-glass);
+      border-bottom-left-radius: 4px;
+    }
+    .message-bubble.user {
+      background: var(--gradient-main);
+      border-bottom-right-radius: 4px;
+      color: white;
+    }
+    .message-bubble.scam-alert {
+      background: rgba(245,101,101,0.12);
+      border-color: rgba(245,101,101,0.4);
+    }
+    .msg-sources {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .msg-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .message-row:hover .msg-actions { opacity: 1; }
+    .msg-action-btn {
+      background: rgba(255,255,255,0.06);
+      border: none;
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      transition: var(--transition);
+    }
+    .msg-action-btn:hover { background: rgba(102,126,234,0.2); color: var(--neon-blue); }
+    .msg-time { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex; gap: 5px; align-items: center; padding: 14px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-glass);
+      border-radius: 16px; border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+    .typing-dot {
+      width: 8px; height: 8px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: typing-bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); background: var(--accent); } }
+    /* Input Area */
+    .chat-input-area {
+      padding: 16px 20px 20px;
+      background: rgba(5,10,24,0.95);
+      border-top: 1px solid var(--border-glass);
+    }
+    .input-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 10px 14px;
+      transition: var(--transition);
+    }
+    .input-wrapper:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(102,126,234,0.12); }
+    #voiceBtn.recording {
+      color: var(--neon-pink) !important;
+      animation: pulse-red 1.5s infinite;
+    }
+    @keyframes pulse-red {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.1); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    #messageInput {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      outline: none;
+      resize: none;
+      max-height: 140px;
+      min-height: 24px;
+      padding: 4px 0;
+      line-height: 1.5;
+    }
+    #messageInput::placeholder { color: var(--text-muted); }
+    .send-btn {
+      width: 40px; height: 40px;
+      background: var(--gradient-main);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      transition: var(--transition);
+      box-shadow: var(--shadow-neon);
+    }
+    .send-btn:hover { transform: scale(1.05); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    /* Quick Prompts */
+    .quick-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .quick-prompt {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-glass);
+      border-radius: 100px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.78rem;
+      padding: 5px 12px;
+      transition: var(--transition);
+    }
+    .quick-prompt:hover { background: rgba(102,126,234,0.12); border-color: var(--accent); color: var(--neon-blue); }
+    /* RAG Sources panel */
+    .sources-panel {
+      background: rgba(5,10,24,0.9);
+      border-left: 1px solid var(--border-glass);
+      width: 280px;
+      flex-shrink: 0;
+      padding: 20px 16px;
+      overflow-y: auto;
+      display: none;
+    }
+    .sources-panel.open { display: block; }
+    /* Welcome Screen */
+    .welcome-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .welcome-logo {
+      width: 80px; height: 80px;
+      background: var(--gradient-main);
+      border-radius: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 20px;
+      box-shadow: var(--shadow-neon);
+    }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .chat-sidebar { display: none; }
+      .chat-sidebar.open { display: flex; position: fixed; inset: 0; z-index: 100; width: 80%; }
+      .sources-panel { display: none !important; }
+    }
+
+    /* TTS Active Speaking State for Chat Bubble */
+    @keyframes speakPulseChat {
+      0% { box-shadow: 0 0 8px rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.3); }
+      50% { box-shadow: 0 0 18px rgba(102, 126, 234, 0.55); border-color: var(--neon-blue); }
+      100% { box-shadow: 0 0 8px rgba(102, 126, 234, 0.2); border-color: rgba(102, 126, 234, 0.3); }
+    }
+    .message-row.is-speaking .message-bubble.ai {
+      animation: speakPulseChat 1.8s infinite ease-in-out !important;
+      border-color: rgba(102, 126, 234, 0.6) !important;
+    }
+    .is-speaking .active-speaker-btn {
+      background: rgba(245, 101, 101, 0.2) !important;
+      color: #fc8181 !important;
+    }
+  </style>
+</head>
+<body>
+<!-- Minimal Navbar -->
+<nav class="navbar-fin" style="padding:8px 0;">
+  <div class="container-fluid px-3">
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="/" class="navbar-brand-fin gradient-text" style="text-decoration:none;font-size:1.2rem;">
+        <div class="nav-logo" style="width:30px;height:30px;font-size:15px;">💰</div>
+        Fin-Lit-Tutor
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <!-- Language Selector -->
+        <select id="langSelect" class="form-fin" style="width:auto;padding:6px 12px;font-size:0.8rem;">
+          <option value="en">🇮🇳 English</option>
+          <option value="hi">हिंदी</option>
+          <option value="ta">தமிழ்</option>
+          <option value="te">తెలుగు</option>
+          <option value="kn">ಕನ್ನಡ</option>
+          <option value="ml">മലയാളം</option>
+          <option value="mr">मराठी</option>
+          <option value="gu">ગુજરાતી</option>
+          <option value="bn">বাংলা</option>
+          <option value="pa">ਪੰਜਾਬੀ</option>
+        </select>
+        <button class="btn-neon-outline" onclick="toggleSources()" style="padding:6px 14px;font-size:0.8rem;">📚 Sources</button>
+        <a href="{{ url_for('main.dashboard') }}" class="btn-neon-outline" style="padding:6px 14px;font-size:0.8rem;">Dashboard</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="chat-layout">
+  <!-- Sidebar: Sessions -->
+  <aside class="chat-sidebar" id="chatSidebar">
+    <div class="chat-sidebar-header">
+      <span style="font-weight:700;">💬 Conversations</span>
+      <button onclick="newChat()" class="btn-neon ms-auto" style="padding:5px 12px;font-size:0.75rem;">+ New</button>
+    </div>
+    <div class="sessions-list" id="sessionsList">
+      <div class="text-muted text-center py-4" style="font-size:0.85rem;">No conversations yet</div>
+    </div>
+    <!-- Sidebar Footer Links -->
+    <div style="padding:12px;border-top:1px solid var(--border-glass);">
+      <a href="{{ url_for('modules.budget_planner') }}" class="sidebar-link"><span class="icon">💰</span>Budget Planner</a>
+      <a href="{{ url_for('modules.emi_calculator') }}" class="sidebar-link"><span class="icon">🏦</span>EMI Calculator</a>
+      <a href="{{ url_for('modules.scam_awareness') }}" class="sidebar-link"><span class="icon">🚨</span>Scam Awareness</a>
+    </div>
+  </aside>
+
+  <!-- Main Chat -->
+  <main class="chat-main" id="chatMain">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="ai-avatar">🤖</div>
+      <div>
+        <div style="font-weight:700;font-size:0.95rem;">Fin-Lit-Tutor <span class="ai-status ms-1"></span></div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">Meta Llama 3.3 70B Instruct (via IBM watsonx) • RAG-powered • Multilingual</div>
+      </div>
+      <div class="ms-auto d-flex gap-2">
+        <button onclick="clearChat()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.8rem;" title="Clear">🗑️ Clear</button>
+      </div>
+    </div>
+
+    <!-- Messages / Welcome -->
+    <div id="messagesContainer" class="messages-container">
+      <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-logo float">💰</div>
+        <h2 class="heading-md gradient-text mb-2">Namaste! I'm Fin-Lit-Tutor</h2>
+        <p class="text-secondary mb-4" style="max-width:460px;">Your AI-powered Digital Financial Literacy companion, backed by Meta Llama 3.3 70B Instruct (via IBM watsonx) and trusted Indian government sources.</p>
+        <div class="quick-prompts justify-content-center">
+          <button class="quick-prompt" onclick="sendQuick('How do I use UPI safely?')">📱 How to use UPI safely?</button>
+          <button class="quick-prompt" onclick="sendQuick('What is the 50-30-20 budgeting rule?')">💰 50-30-20 Rule?</button>
+          <button class="quick-prompt" onclick="sendQuick('Explain PMJDY Jan Dhan Yojana')">🏦 PMJDY Scheme?</button>
+          <button class="quick-prompt" onclick="sendQuick('How to calculate EMI for a home loan?')">🏠 EMI Calculation?</button>
+          <button class="quick-prompt" onclick="sendQuick('What is a CIBIL score and how to improve it?')">📊 CIBIL Score?</button>
+          <button class="quick-prompt" onclick="sendQuick('How to detect and avoid UPI scams?')">🚨 UPI Fraud?</button>
+          <button class="quick-prompt" onclick="sendQuick('मुझे PPF के बारे में बताएं')">हिं PPF?</button>
+          <button class="quick-prompt" onclick="sendQuick('SIP முதலீடு என்றால் என்ன?')">தமி SIP?</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-area">
+      <div class="quick-prompts" id="quickPrompts" style="display:none;">
+        <button class="quick-prompt" onclick="sendQuick('What is UPI PIN?')">UPI PIN</button>
+        <button class="quick-prompt" onclick="sendQuick('How to open Jan Dhan account?')">Jan Dhan</button>
+        <button class="quick-prompt" onclick="sendQuick('MUDRA loan eligibility?')">MUDRA</button>
+        <button class="quick-prompt" onclick="sendQuick('Tax saving tips under 80C')">80C Tax</button>
+      </div>
+      <div class="input-wrapper">
+        <button id="voiceBtn" onclick="toggleVoice()" title="Voice Input" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;padding:4px;">🎙️</button>
+        <textarea
+          id="messageInput"
+          placeholder="Ask about UPI, banking, savings, loans, investments, government schemes..."
+          rows="1"
+          onkeydown="handleKeyDown(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+      <p class="text-muted text-center mt-2" style="font-size:0.72rem;">⚠️ General financial literacy only. Not financial advice. Verify important matters at rbi.org.in | <strong>Cyber Fraud: 1930</strong></p>
+    </div>
+  </main>
+
+  <!-- RAG Sources Panel -->
+  <aside class="sources-panel" id="sourcesPanel">
+    <h6 style="font-weight:700;margin-bottom:16px;">📚 Knowledge Sources</h6>
+    <div id="sourcesList">
+      <p class="text-muted" style="font-size:0.85rem;">Sources will appear here after your first question.</p>
+    </div>
+    <hr style="border-color:var(--border-glass);margin:16px 0;">
+    <h6 style="font-weight:600;font-size:0.85rem;margin-bottom:12px;">RAG Workflow</h6>
+    <div style="font-size:0.75rem;color:var(--text-muted);">
+      <div class="rag-node mb-2">💬 Your Query</div>
+      <div class="text-center mb-1" style="color:var(--accent);">↓</div>
+      <div class="rag-node mb-2">🧬 Embedding</div>
+      <div class="text-center mb-1" style="color:var(--accent);">↓</div>
+      <div class="rag-node mb-2">🗄️ ChromaDB Search</div>
+      <div class="text-center mb-1" style="color:var(--accent);">↓</div>
+      <div class="rag-node mb-2" id="ragStatus">📄 Retrieved Docs: 0</div>
+      <div class="text-center mb-1" style="color:var(--accent);">↓</div>
+      <div class="rag-node mb-2">⚙️ Meta Llama 3.3 70B Instruct (via IBM watsonx)</div>
+      <div class="text-center mb-1" style="color:var(--accent);">↓</div>
+      <div class="rag-node" id="ragOutput">✨ AI Response</div>
+    </div>
+  </aside>
+</div>
+
+<!-- Rating Modal -->
+<div id="ratingModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;">
+  <div class="glass-card" style="width:360px;padding:28px;">
+    <h5 style="font-weight:700;margin-bottom:16px;">Rate this response</h5>
+    <div class="d-flex gap-2 justify-content-center mb-4">
+      <button class="rating-star" data-rating="1" onclick="setRating(1)" style="font-size:1.8rem;background:none;border:none;cursor:pointer;">⭐</button>
+      <button class="rating-star" data-rating="2" onclick="setRating(2)" style="font-size:1.8rem;background:none;border:none;cursor:pointer;">⭐</button>
+      <button class="rating-star" data-rating="3" onclick="setRating(3)" style="font-size:1.8rem;background:none;border:none;cursor:pointer;">⭐</button>
+      <button class="rating-star" data-rating="4" onclick="setRating(4)" style="font-size:1.8rem;background:none;border:none;cursor:pointer;">⭐</button>
+      <button class="rating-star" data-rating="5" onclick="setRating(5)" style="font-size:1.8rem;background:none;border:none;cursor:pointer;">⭐</button>
+    </div>
+    <textarea id="feedbackComment" class="form-fin w-100 mb-3" rows="2" placeholder="Optional comment..."></textarea>
+    <div class="d-flex gap-2">
+      <button class="btn-neon w-100" onclick="submitFeedback()">Submit</button>
+      <button class="btn-neon-outline w-100" onclick="closeFeedback()">Skip</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── State ────────────────────────────────────────────────────
+let currentSessionId = null;
+let currentMessageId = null;
+let selectedRating = 0;
+let isTyping = false;
+let recognition = null;
+let isRecording = false;
+
+// ── Init ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadSessions();
+  const savedLang = localStorage.getItem('finlang') || '{{ user.language or "en" }}';
+  document.getElementById('langSelect').value = savedLang;
+  document.getElementById('langSelect').addEventListener('change', function() {
+    localStorage.setItem('finlang', this.value);
+  });
+});
+
+// ── Load Sessions ─────────────────────────────────────────────
+async function loadSessions() {
+  try {
+    const res = await fetch('/chat/sessions');
+    const sessions = await res.json();
+    const list = document.getElementById('sessionsList');
+    if (!sessions.length) { list.innerHTML = '<div class="text-muted text-center py-4" style="font-size:0.85rem;">No conversations yet</div>'; return; }
+    list.innerHTML = sessions.map(s => `
+      <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="loadSession(${s.id})">
+        <div class="session-title">${escHtml(s.title)}</div>
+        <div class="session-meta">${s.message_count} messages • ${formatDate(s.updated_at)}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+// ── Load Session Messages ────────────────────────────────────
+async function loadSession(id) {
+  currentSessionId = id;
+  const container = document.getElementById('messagesContainer');
+  container.innerHTML = '';
+  document.getElementById('welcomeScreen') && (document.getElementById('welcomeScreen').style.display = 'none');
+  document.getElementById('quickPrompts').style.display = 'flex';
+  try {
+    const res = await fetch(`/chat/sessions/${id}/messages`);
+    const messages = await res.json();
+    messages.forEach(m => appendMessage(m.role, m.content, m.retrieved_docs, m.id, m.created_at));
+    container.scrollTop = container.scrollHeight;
+    loadSessions();
+  } catch(e) { console.error(e); }
+}
+
+// ── Send Message ─────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const message = input.value.trim();
+  if (!message || isTyping) return;
+
+  const lang = document.getElementById('langSelect').value;
+  input.value = '';
+  autoResize(input);
+  isTyping = true;
+
+  // Hide welcome screen
+  const ws = document.getElementById('welcomeScreen');
+  if (ws) ws.style.display = 'none';
+  document.getElementById('quickPrompts').style.display = 'flex';
+
+  appendMessage('user', message, [], null, new Date().toISOString());
+  showTyping();
+  document.getElementById('sendBtn').disabled = true;
+
+  // Update RAG workflow
+  updateRagStatus('querying');
+
+  try {
+    const res = await fetch('/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, session_id: currentSessionId, language: lang }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+
+    hideTyping();
+    currentSessionId = data.session_id;
+    currentMessageId = data.message_id;
+
+    appendMessage('assistant', data.response, data.retrieved_docs || [], data.message_id, new Date().toISOString(), data.is_scam_alert);
+    updateSourcesPanel(data.retrieved_docs || []);
+    updateRagStatus('done', data.retrieved_docs?.length || 0);
+    loadSessions();
+
+    // Warn the user when IBM Watsonx was unreachable and a static fallback was served
+    if (data.is_fallback) {
+      showToast('⚠️ IBM Watsonx AI is offline — showing a cached response. Check server logs for IBM_CLOUD_API_KEY errors.', 'warning');
+    }
+
+    // Show feedback only for real AI responses
+    if ((data.tokens_used || 0) > 0) setTimeout(showFeedback, 2000);
+
+  } catch(e) {
+    hideTyping();
+    appendMessage('assistant', '❌ Sorry, something went wrong. Please try again. If urgent, call 1930.', [], null, new Date().toISOString());
+  } finally {
+    isTyping = false;
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('messageInput').focus();
+  }
+}
+
+// ── Append Message ───────────────────────────────────────────
+function appendMessage(role, content, sources, msgId, timestamp, isScamAlert = false) {
+  const container = document.getElementById('messagesContainer');
+  const div = document.createElement('div');
+  div.className = `message-row ${role}`;
+  div.dataset.msgId = msgId || '';
+
+  const formattedContent = formatMessage(content);
+  const sourcesHtml = sources && sources.length ?
+    `<div class="msg-sources">📋 Sources: ${sources.map(s => `<a href="${s.url || '#'}" target="_blank" style="color:var(--neon-blue);margin-right:8px;">${s.source || 'Knowledge Base'}</a>`).join('')}</div>` : '';
+
+  const timeStr = formatTime(timestamp);
+  const actionsHtml = role === 'assistant' && msgId ?
+    `<div class="msg-actions">
+      <button class="msg-action-btn" onclick="copyMessage(this)" title="Copy">📋 Copy</button>
+      <button class="msg-action-btn" onclick="showFeedback(${msgId})" title="Rate">⭐ Rate</button>
+      <button class="msg-action-btn active-speaker-btn" onclick="speakMessage(this)" title="Listen">🔊 Listen</button>
+    </div>` : '';
+
+  div.innerHTML = `
+    <div class="msg-avatar ${role}">${role === 'ai' || role === 'assistant' ? '🤖' : '👤'}</div>
+    <div>
+      <div class="message-bubble ${role === 'assistant' ? 'ai' : 'user'} ${isScamAlert ? 'scam-alert' : ''}">
+        ${formattedContent}${sourcesHtml}
+      </div>
+      ${actionsHtml}
+      <div class="msg-time">${timeStr}</div>
+    </div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── Format Message ───────────────────────────────────────────
+function formatMessage(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px;font-size:0.88em;">$1</code>')
+    .replace(/\n/g, '<br>')
+    .replace(/^#{1,3} (.+)/gm, '<strong style="color:var(--neon-blue);">$1</strong>');
+}
+
+// ── Typing Indicator ─────────────────────────────────────────
+function showTyping() {
+  const container = document.getElementById('messagesContainer');
+  const div = document.createElement('div');
+  div.id = 'typingIndicator';
+  div.className = 'message-row';
+  div.innerHTML = `<div class="msg-avatar ai">🤖</div><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+function hideTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+// ── Update Sources Panel ─────────────────────────────────────
+function updateSourcesPanel(sources) {
+  const list = document.getElementById('sourcesList');
+  if (!sources.length) { list.innerHTML = '<p class="text-muted" style="font-size:0.85rem;">No specific sources retrieved for this query.</p>'; return; }
+  list.innerHTML = sources.map(s => `
+    <div class="scheme-card glass-card-sm mb-2" style="padding:10px 12px;">
+      <div style="font-weight:600;font-size:0.8rem;color:var(--neon-blue);">${escHtml(s.source || 'Knowledge Base')}</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">${escHtml((s.content || '').substring(0,120))}...</div>
+      ${s.url ? `<a href="${s.url}" target="_blank" style="font-size:0.72rem;color:var(--accent);">View source →</a>` : ''}
+    </div>
+  `).join('');
+  document.getElementById('ragStatus').textContent = `📄 Retrieved Docs: ${sources.length}`;
+  document.getElementById('ragStatus').classList.add('active');
+}
+
+// ── RAG Status ───────────────────────────────────────────────
+function updateRagStatus(state, count) {
+  const nodes = document.querySelectorAll('.rag-node');
+  nodes.forEach(n => n.classList.remove('active'));
+  if (state === 'done' && count > 0) {
+    document.getElementById('ragOutput').classList.add('active');
+  }
+}
+
+// ── Quick Prompts ─────────────────────────────────────────────
+function sendQuick(text) {
+  document.getElementById('messageInput').value = text;
+  sendMessage();
+}
+
+// ── New Chat ──────────────────────────────────────────────────
+function newChat() {
+  currentSessionId = null;
+  const container = document.getElementById('messagesContainer');
+  container.innerHTML = `
+    <div class="welcome-screen" id="welcomeScreen">
+      <div class="welcome-logo float">💰</div>
+      <h2 class="heading-md gradient-text mb-2">New Conversation</h2>
+      <p class="text-secondary mb-4">What financial topic would you like to learn about today?</p>
+    </div>
+  `;
+  document.getElementById('quickPrompts').style.display = 'none';
+  loadSessions();
+}
+
+// ── Clear Chat ─────────────────────────────────────────────── 
+function clearChat() {
+  if (!confirm('Clear this conversation?')) return;
+  newChat();
+  if (currentSessionId) {
+    fetch(`/chat/sessions/${currentSessionId}`, { method: 'DELETE' }).then(loadSessions);
+  }
+}
+
+// ── Toggle Sources Panel ──────────────────────────────────────
+function toggleSources() {
+  document.getElementById('sourcesPanel').classList.toggle('open');
+}
+
+// ── Voice Input ───────────────────────────────────────────────
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    showToast('Voice input not supported in this browser', 'warning');
+    return;
+  }
+  if (isRecording) {
+    if (recognition) {
+      recognition.stop();
+    }
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  const lang = document.getElementById('langSelect').value;
+  const langMap = { en:'en-IN', hi:'hi-IN', ta:'ta-IN', te:'te-IN', kn:'kn-IN', ml:'ml-IN', mr:'mr-IN', gu:'gu-IN', bn:'bn-IN', pa:'pa-IN' };
+  recognition.lang = langMap[lang] || 'en-IN';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  
+  recognition.onstart = () => { 
+    isRecording = true; 
+    document.getElementById('voiceBtn').textContent = '🔴'; 
+    document.getElementById('voiceBtn').classList.add('recording');
+  };
+  
+  recognition.onresult = e => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+    document.getElementById('messageInput').value = transcript;
+    autoResize(document.getElementById('messageInput'));
+  };
+  
+  recognition.onerror = e => {
+    console.error('Speech recognition error:', e.error);
+    if (e.error === 'not-allowed') {
+      showToast('Microphone permission denied. Please allow microphone access in browser settings.', 'warning');
+    } else if (e.error === 'no-speech') {
+      showToast('No speech detected. Please speak clearly into your microphone.', 'info');
+    } else {
+      showToast('Speech recognition error: ' + e.error, 'error');
+    }
+  };
+  
+  recognition.onend = () => { 
+    isRecording = false; 
+    document.getElementById('voiceBtn').textContent = '🎙️'; 
+    document.getElementById('voiceBtn').classList.remove('recording');
+  };
+  
+  try {
+    recognition.start();
+  } catch (err) {
+    console.error('Speech recognition failed to start:', err);
+    showToast('Speech recognition is only supported in secure contexts (HTTPS/localhost) in this browser.', 'warning');
+  }
+}
+
+// ── Text to Speech ────────────────────────────────────────────
+let activeSpeechUtterance = null;
+let activeSpeakingRow = null;
+let cachedVoices = [];
+
+function loadVoices() {
+  if (window.speechSynthesis) {
+    cachedVoices = window.speechSynthesis.getVoices();
+  }
+}
+if (window.speechSynthesis) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// Helper for fallback text-to-speech using Google Translate TTS API (supports all browsers & OS)
+function playGoogleTTS(text, langCode, callback) {
+  const maxLen = 180;
+  const regex = /[^.!?।\n\r]+[.!?।\n\r]*/g;
+  let chunks = text.match(regex) || [text];
+  
+  let finalChunks = [];
+  chunks.forEach(chunk => {
+    while (chunk.length > maxLen) {
+      let part = chunk.substring(0, maxLen);
+      let lastSpace = part.lastIndexOf(' ');
+      if (lastSpace > 50) {
+        part = part.substring(0, lastSpace);
+      }
+      finalChunks.push(part.trim());
+      chunk = chunk.substring(part.length);
+    }
+    if (chunk.trim()) {
+      finalChunks.push(chunk.trim());
+    }
+  });
+
+  let index = 0;
+  let currentAudio = null;
+
+  function playNext() {
+    if (index >= finalChunks.length) {
+      if (callback) callback();
+      return;
+    }
+    const chunkText = finalChunks[index++];
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langCode}&client=tw-ob&q=${encodeURIComponent(chunkText)}`;
+    
+    currentAudio = new Audio(url);
+    currentAudio.play().catch(err => {
+      console.warn("[TTS Fallback] Audio playback error, skipping chunk:", err);
+      playNext();
+    });
+    
+    currentAudio.onended = playNext;
+    currentAudio.onerror = () => {
+      console.error("[TTS Fallback] Audio load error, skipping chunk:", index - 1);
+      playNext();
+    };
+  }
+
+  playNext();
+
+  return {
+    stop: () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      index = finalChunks.length;
+    }
+  };
+}
+
+function stopChatSpeaking() {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  if (window.activeGoogleTTSController) {
+    window.activeGoogleTTSController.stop();
+    window.activeGoogleTTSController = null;
+  }
+  document.querySelectorAll('.message-row.is-speaking').forEach(row => {
+    row.classList.remove('is-speaking');
+    const btn = row.querySelector('.active-speaker-btn');
+    if (btn) {
+      btn.innerHTML = '🔊 Listen';
+      btn.classList.remove('active-speaker');
+    }
+  });
+  activeSpeakingRow = null;
+}
+
+function speakMessage(btn) {
+  if (!window.speechSynthesis) {
+    showToast('Text-to-speech not supported in this browser', 'warning');
+    return;
+  }
+
+  const row = btn.closest('.message-row');
+  const bubble = row.querySelector('.message-bubble');
+  
+  // Extract text, strip Sources footer if any
+  let text = bubble.innerText.split('📋 Sources:')[0].trim();
+
+  // If clicking same speaker while active, stop it
+  if ((window.speechSynthesis.speaking || window.activeGoogleTTSController) && activeSpeakingRow === row) {
+    stopChatSpeaking();
+    return;
+  }
+
+  stopChatSpeaking();
+
+  activeSpeakingRow = row;
+  row.classList.add('is-speaking');
+  btn.innerHTML = '🛑 Stop';
+  btn.classList.add('active-speaker');
+
+  activeSpeechUtterance = new SpeechSynthesisUtterance(text);
+  const lang = document.getElementById('langSelect').value;
+  const langMap = { 
+    en:'en-IN', hi:'hi-IN', ta:'ta-IN', te:'te-IN', 
+    kn:'kn-IN', ml:'ml-IN', mr:'mr-IN', gu:'gu-IN', 
+    bn:'bn-IN', pa:'pa-IN' 
+  };
+  activeSpeechUtterance.lang = langMap[lang] || 'en-IN';
+  
+  // Find a female voice matching language, or fallback to any matching language voice
+  const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
+  
+  const maleKeywords = ['male', 'guy', 'david', 'hemant', 'madhur', 'ryan', 'george', 'ravi', 'girish', 'stefan', 'hari', 'yash'];
+  const femaleKeywords = ['female', 'zira', 'samantha', 'hazel', 'susan', 'karen', 'heera', 'kalpana', 'aria', 'aarohi', 'neerja', 'swara', 'sonia', 'raveena', 'shruthi', 'pallavi', 'chitra', 'google हिन्दी', 'haruka', 'nanami', 'xiaoxiao'];
+
+  // 1. Try to find a female voice matching the selected language
+  let selectedVoice = voices.find(v => {
+    const name = v.name.toLowerCase();
+    const isLangMatch = v.lang.startsWith(lang) || v.lang.replace('_', '-').startsWith(langMap[lang]);
+    const isMale = maleKeywords.some(kw => name.includes(kw));
+    const isFemale = femaleKeywords.some(kw => name.includes(kw)) || (!isMale && (name.includes('natural') || name.includes('online') || name.includes('google') || name.includes('neural')));
+    return isLangMatch && isFemale;
+  });
+
+  // 2. If no female voice for that language is found, look for ANY voice (male or female) matching the selected language
+  if (!selectedVoice) {
+    selectedVoice = voices.find(v => {
+      const vLang = v.lang.toLowerCase().replace('_', '-');
+      const targetLang = langMap[lang].toLowerCase();
+      return vLang.startsWith(lang.toLowerCase()) || vLang.startsWith(targetLang);
+    });
+  }
+
+  // 3. Only if the selected language is English and we still don't have a voice, fall back to any English female voice
+  if (!selectedVoice && lang === 'en') {
+    selectedVoice = voices.find(v => {
+      const name = v.name.toLowerCase();
+      const isMale = maleKeywords.some(kw => name.includes(kw));
+      const isFemale = femaleKeywords.some(kw => name.includes(kw)) || (!isMale && (name.includes('natural') || name.includes('online') || name.includes('google') || name.includes('neural')));
+      return isFemale;
+    });
+  }
+
+  let isGoogleFallback = false;
+  if (selectedVoice) {
+    activeSpeechUtterance.voice = selectedVoice;
+    console.log('[TTS] Selected voice:', selectedVoice.name, 'for lang:', lang);
+  } else {
+    // If we can't find a matching local voice, and the language is not English,
+    // we use the Google TTS API fallback to ensure it works on any machine.
+    if (lang !== 'en') {
+      isGoogleFallback = true;
+      console.log('[TTS] No local matching voice. Using Google TTS fallback for:', lang);
+    } else {
+      console.log('[TTS] No local matching voice. Letting browser dynamically resolve cloud TTS for:', lang);
+    }
+  }
+
+  if (isGoogleFallback) {
+    window.activeGoogleTTSController = playGoogleTTS(text, lang, () => {
+      stopChatSpeaking();
+    });
+  } else {
+    activeSpeechUtterance.rate = 0.95;
+    activeSpeechUtterance.pitch = 1.15;
+    activeSpeechUtterance.onend = () => { stopChatSpeaking(); };
+    activeSpeechUtterance.onerror = () => { stopChatSpeaking(); };
+    window.speechSynthesis.speak(activeSpeechUtterance);
+  }
+}
+
+// ── Feedback ──────────────────────────────────────────────────
+function showFeedback(msgId) {
+  currentMessageId = msgId || currentMessageId;
+  document.getElementById('ratingModal').style.display = 'flex';
+  selectedRating = 0;
+}
+function closeFeedback() { document.getElementById('ratingModal').style.display = 'none'; }
+function setRating(r) {
+  selectedRating = r;
+  document.querySelectorAll('.rating-star').forEach((btn, i) => {
+    btn.style.opacity = i < r ? '1' : '0.3';
+  });
+}
+async function submitFeedback() {
+  if (!selectedRating) { closeFeedback(); return; }
+  await fetch('/chat/feedback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rating: selectedRating, message_id: currentMessageId, comment: document.getElementById('feedbackComment').value }),
+  });
+  closeFeedback();
+  showToast('Thank you for your feedback!', 'success');
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function handleKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+function copyMessage(btn) {
+  const bubble = btn.closest('.message-row').querySelector('.message-bubble');
+  navigator.clipboard.writeText(bubble.innerText).then(() => showToast('Copied!', 'success'));
+}
+function escHtml(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatDate(iso) { return new Date(iso).toLocaleDateString('en-IN', { day:'numeric', month:'short' }); }
+function formatTime(iso) { return new Date(iso).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true }); }
+function showToast(msg, type) {
+  let toast = document.getElementById('globalToast');
+  if (!toast) { toast = document.createElement('div'); toast.id='globalToast'; toast.className='toast-fin'; document.body.appendChild(toast); }
+  toast.innerHTML = `${type==='success'?'✅':type==='warning'?'⚠️':'ℹ️'} ${msg}`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

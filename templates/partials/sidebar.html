@@ -1,0 +1,121 @@
+<nav class="fs-sidebar" id="appSidebar" aria-label="Main navigation">
+
+  <!-- Brand -->
+  <div class="fs-sidebar__brand">
+    <a href="/" class="fs-sidebar__logo" aria-label="Fin-Lit-Tutor home">
+      <span class="fs-sidebar__logo-icon" aria-hidden="true">💰</span>
+      <span class="fs-sidebar__logo-text">Fin-Lit-Tutor</span>
+    </a>
+  </div>
+
+  <!-- Nav links -->
+  <div class="fs-sidebar__nav">
+
+    <a href="{{ url_for('main.dashboard') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'main.dashboard' %}is-active{% endif %}"
+       aria-current="{% if request.endpoint == 'main.dashboard' %}page{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-house"></i>
+      </span>
+      <span>Dashboard</span>
+    </a>
+
+    <a href="{{ url_for('chat.chat_page') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'chat.chat_page' %}is-active{% endif %}"
+       aria-current="{% if request.endpoint == 'chat.chat_page' %}page{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-robot"></i>
+      </span>
+      <span>AI Chatbot</span>
+      <span class="fs-sidebar__pill" aria-label="AI powered">AI</span>
+    </a>
+
+    <h2 class="fs-sidebar__section-label">Financial Tools</h2>
+
+    <a href="{{ url_for('modules.budget_planner') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'modules.budget_planner' %}is-active{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-wallet"></i>
+      </span>
+      <span>Budget Planner</span>
+    </a>
+
+    <a href="{{ url_for('modules.emi_calculator') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'modules.emi_calculator' %}is-active{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-landmark"></i>
+      </span>
+      <span>EMI Calculator</span>
+    </a>
+
+    <a href="{{ url_for('modules.health_score') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'modules.health_score' %}is-active{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-heart-pulse"></i>
+      </span>
+      <span>Financial Score</span>
+    </a>
+
+    <h2 class="fs-sidebar__section-label">Learn &amp; Protect</h2>
+
+    <a href="{{ url_for('modules.scam_awareness') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'modules.scam_awareness' %}is-active{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-shield-halved"></i>
+      </span>
+      <span>Scam Awareness</span>
+    </a>
+
+    <a href="{{ url_for('modules.government_schemes') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'modules.government_schemes' %}is-active{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-building-columns"></i>
+      </span>
+      <span>Gov Schemes</span>
+    </a>
+
+    <a href="{{ url_for('modules.learning_dashboard') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'modules.learning_dashboard' %}is-active{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </span>
+      <span>Learning</span>
+    </a>
+
+    <a href="{{ url_for('modules.achievements') }}"
+       class="fs-sidebar__link {% if request.endpoint == 'modules.achievements' %}is-active{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-trophy"></i>
+      </span>
+      <span>Achievements</span>
+    </a>
+
+    {% if current_user.is_admin %}
+    <h2 class="fs-sidebar__section-label">Admin</h2>
+    <a href="{{ url_for('admin.admin_dashboard') }}"
+       class="fs-sidebar__link {% if 'admin' in request.endpoint %}is-active{% endif %}">
+      <span class="fs-sidebar__link-icon" aria-hidden="true">
+        <i class="fa-solid fa-gear"></i>
+      </span>
+      <span>Admin Panel</span>
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- User footer -->
+  <div class="fs-sidebar__footer">
+    <a href="{{ url_for('auth.profile') }}" class="fs-sidebar__user" aria-label="Edit profile">
+      <div class="fs-sidebar__avatar" aria-hidden="true">
+        {{ current_user.name[0] | upper }}
+      </div>
+      <div class="fs-sidebar__user-info">
+        <span class="fs-sidebar__user-name">{{ current_user.name }}</span>
+        <span class="fs-sidebar__user-xp">{{ current_user.xp_points or 0 }} XP</span>
+      </div>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="fs-sidebar__logout" aria-label="Sign out">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </a>
+  </div>
+
+</nav>

@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Government Schemes – Fin-Lit-Tutor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <style>
+    .module-page { max-width: 1100px; margin: 80px auto 40px; padding: 0 20px; }
+    .scheme-full-card { padding: 24px; cursor: pointer; transition: var(--transition); }
+    .scheme-full-card:hover { transform: translateY(-4px); }
+    .benefit-tag { background: rgba(72,187,120,0.15); border: 1px solid rgba(72,187,120,0.3); border-radius: 100px; color: var(--neon-green); font-size: 0.78rem; font-weight: 700; padding: 4px 12px; }
+    .filter-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: 100px; color: var(--text-secondary); cursor: pointer; font-size: 0.82rem; padding: 7px 16px; transition: var(--transition); }
+    .filter-btn.active, .filter-btn:hover { background: var(--gradient-main); border-color: transparent; color: white; }
+  </style>
+</head>
+<body>
+<nav class="navbar-fin">
+  <div class="container-fluid px-3">
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="/" class="navbar-brand-fin gradient-text" style="text-decoration:none;font-size:1.2rem;"><div class="nav-logo" style="width:30px;height:30px;font-size:15px;">💰</div>Fin-Lit-Tutor</a>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-neon-outline" style="padding:6px 14px;font-size:0.8rem;">← Dashboard</a>
+        <a href="{{ url_for('chat.chat_page') }}" class="btn-neon" style="padding:6px 14px;font-size:0.8rem;">💬 Ask AI</a>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="module-page">
+  <div class="text-center mb-5">
+    <span class="badge-fin">Resource Library</span>
+    <h1 class="heading-lg gradient-text-gold mt-3">🏛️ Government Resource Library</h1>
+    <p class="text-secondary mt-2">Explore India's most impactful government financial schemes</p>
+  </div>
+  <!-- Category Filters -->
+  <div class="d-flex flex-wrap gap-2 justify-content-center mb-5">
+    <button class="filter-btn active" onclick="filterSchemes('all', this)">All Schemes</button>
+    <button class="filter-btn" onclick="filterSchemes('banking', this)">🏦 Banking</button>
+    <button class="filter-btn" onclick="filterSchemes('insurance', this)">🛡️ Insurance</button>
+    <button class="filter-btn" onclick="filterSchemes('loan', this)">💼 Loans</button>
+    <button class="filter-btn" onclick="filterSchemes('savings', this)">💰 Savings</button>
+    <button class="filter-btn" onclick="filterSchemes('pension', this)">🏖️ Pension</button>
+    <button class="filter-btn" onclick="filterSchemes('health', this)">💊 Health</button>
+    <button class="filter-btn" onclick="filterSchemes('agriculture', this)">🌾 Agriculture</button>
+    <button class="filter-btn" onclick="filterSchemes('business', this)">🏪 Business</button>
+  </div>
+  <!-- Schemes Grid -->
+  <div class="row g-4" id="schemesContainer">
+    <div class="text-center col-12 py-5">
+      <div class="spinner-fin mx-auto mb-3"></div>
+      <p class="text-muted">Loading schemes...</p>
+    </div>
+  </div>
+</div>
+<script>
+let allSchemes = [];
+const icons = { banking:'🏦', insurance:'🛡️', loan:'💼', savings:'💰', pension:'🏖️', health:'💊', agriculture:'🌾', business:'🏪', general:'📋' };
+
+async function loadSchemes() {
+  const res = await fetch('/api/schemes');
+  allSchemes = await res.json();
+  renderSchemes(allSchemes);
+}
+
+function renderSchemes(schemes) {
+  const container = document.getElementById('schemesContainer');
+  container.innerHTML = schemes.map(s => `
+    <div class="col-md-6 col-lg-4 scheme-item" data-category="${s.category}">
+      <a href="${s.url}" target="_blank" style="text-decoration:none;">
+        <div class="glass-card scheme-full-card">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="feature-icon" style="width:44px;height:44px;font-size:20px;flex-shrink:0;">${icons[s.category] || '📋'}</div>
+            <span class="benefit-tag">${s.benefit}</span>
+          </div>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;">${s.full_name}</div>
+          <div style="font-size:0.78rem;color:var(--neon-blue);font-weight:600;margin-bottom:10px;">${s.name}</div>
+          <p class="text-secondary" style="font-size:0.85rem;line-height:1.6;margin-bottom:12px;">${s.desc}</p>
+          <div style="font-size:0.78rem;color:var(--text-muted);">🌐 ${s.url.replace('https://','')}</div>
+        </div>
+      </a>
+    </div>
+  `).join('');
+}
+
+function filterSchemes(category, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = category === 'all' ? allSchemes : allSchemes.filter(s => s.category === category);
+  renderSchemes(filtered);
+}
+
+loadSchemes();
+</script>
+</body>
+</html>

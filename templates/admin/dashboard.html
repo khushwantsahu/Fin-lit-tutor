@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – Fin-Lit-Tutor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    .admin-layout { display: flex; min-height: 100vh; }
+    .admin-sidebar { width: 240px; background: rgba(5,10,24,0.97); border-right: 1px solid var(--border-glass); position: fixed; top: 0; bottom: 0; padding: 20px 12px; display: flex; flex-direction: column; }
+    .admin-main { flex: 1; margin-left: 240px; padding: 28px; }
+    .stat-mini { padding: 20px; text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 800; }
+    .upload-zone { border: 2px dashed var(--border-glass); border-radius: var(--radius-lg); padding: 40px; text-align: center; cursor: pointer; transition: var(--transition); }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: rgba(102,126,234,0.06); }
+    .doc-row td { font-size: 0.875rem; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.indexed { background: var(--neon-green); }
+    .status-dot.pending { background: var(--neon-gold); }
+  </style>
+</head>
+<body>
+<!-- Admin Sidebar -->
+<aside class="admin-sidebar">
+  <div class="d-flex align-items-center gap-2 mb-5">
+    <div class="nav-logo">⚙️</div>
+    <span style="font-weight:800;font-size:1.1rem;" class="gradient-text">Admin Panel</span>
+  </div>
+  <nav>
+    <a href="{{ url_for('admin.admin_dashboard') }}" class="sidebar-link active"><span class="icon">📊</span> Overview</a>
+    <a href="{{ url_for('admin.documents') }}" class="sidebar-link"><span class="icon">📄</span> Documents</a>
+    <a href="{{ url_for('admin.knowledge_base') }}" class="sidebar-link"><span class="icon">🗄️</span> Knowledge Base</a>
+    <a href="{{ url_for('admin.users') }}" class="sidebar-link"><span class="icon">👥</span> Users</a>
+    <a href="{{ url_for('admin.feedbacks') }}" class="sidebar-link"><span class="icon">⭐</span> Feedback</a>
+  </nav>
+  <div style="margin-top:auto;padding-top:20px;border-top:1px solid var(--border-glass);">
+    <a href="{{ url_for('main.dashboard') }}" class="sidebar-link"><span class="icon">🏠</span> User Dashboard</a>
+    <a href="{{ url_for('auth.logout') }}" class="sidebar-link"><span class="icon">🚪</span> Logout</a>
+  </div>
+</aside>
+ 
+<main class="admin-main">
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+      <h1 class="heading-md gradient-text">Admin Dashboard</h1>
+      <p class="text-muted">Fin-Lit-Tutor Platform Management</p>
+    </div>
+    <!-- RAG Status -->
+    <div class="glass-card px-3 py-2 d-flex align-items-center gap-2">
+      <span class="status-dot {{ 'indexed' if rag_stats.status == 'online' else 'pending' }}"></span>
+      <span style="font-size:0.85rem;">RAG: {{ rag_stats.status | capitalize }} • {{ rag_stats.document_count }} chunks</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-5">
+    <div class="col-6 col-md-3"><div class="glass-card stat-mini"><div style="font-size:1.5rem;margin-bottom:6px;">👥</div><div class="stat-num gradient-text">{{ total_users }}</div><div class="stat-label">Total Users</div></div></div>
+    <div class="col-6 col-md-3"><div class="glass-card stat-mini"><div style="font-size:1.5rem;margin-bottom:6px;">📄</div><div class="stat-num gradient-text-gold">{{ total_docs }}</div><div class="stat-label">Documents</div></div></div>
+    <div class="col-6 col-md-3"><div class="glass-card stat-mini"><div style="font-size:1.5rem;margin-bottom:6px;">💬</div><div class="stat-num gradient-text-green">{{ total_messages }}</div><div class="stat-label">AI Messages</div></div></div>
+    <div class="col-6 col-md-3"><div class="glass-card stat-mini"><div style="font-size:1.5rem;margin-bottom:6px;">⭐</div><div class="stat-num gradient-text">{{ avg_feedback }}/5</div><div class="stat-label">Avg Rating</div></div></div>
+  </div>
+
+  <!-- Upload + Recent Sections -->
+  <div class="row g-4 mb-4">
+    <!-- Upload Document -->
+    <div class="col-md-6">
+      <div class="glass-card p-4">
+        <h5 style="font-weight:700;margin-bottom:16px;">📤 Upload Document to RAG</h5>
+        <div class="mb-3"><label class="form-label-fin">Document Title</label><input type="text" id="docTitle" class="form-fin" placeholder="RBI Guidelines on UPI Safety 2024"></div>
+        <div class="mb-3"><label class="form-label-fin">Source Name</label><input type="text" id="docSource" class="form-fin" placeholder="Reserve Bank of India"></div>
+        <div class="mb-3"><label class="form-label-fin">Source URL</label><input type="url" id="docUrl" class="form-fin" placeholder="https://rbi.org.in/..."></div>
+        <div class="mb-3">
+          <label class="form-label-fin">Category</label>
+          <select id="docCategory" class="form-fin">
+            <option value="general">General</option>
+            <option value="payments">Payments / UPI</option>
+            <option value="banking">Banking</option>
+            <option value="investment">Investment / SEBI</option>
+            <option value="insurance">Insurance</option>
+            <option value="taxation">Taxation</option>
+            <option value="security">Cyber Security</option>
+            <option value="schemes">Government Schemes</option>
+          </select>
+        </div>
+        <div class="upload-zone mb-4" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" style="display:none" accept=".pdf,.txt,.doc,.docx" onchange="handleFile(event)">
+          <div style="font-size:2rem;margin-bottom:8px;">📁</div>
+          <p class="text-muted" style="font-size:0.875rem;" id="uploadLabel">Click to upload PDF, TXT, DOC, DOCX<br>Max 16MB</p>
+        </div>
+        <button onclick="uploadDocument()" class="btn-neon w-100" id="uploadBtn" style="padding:12px;">
+          ⬆️ Upload & Index Document
+        </button>
+        <button onclick="seedKnowledge()" class="btn-neon-outline w-100 mt-2" style="padding:10px;font-size:0.85rem;">
+          🌱 Seed Built-in Financial Knowledge
+        </button>
+      </div>
+    </div>
+    <!-- Recent Users -->
+    <div class="col-md-6">
+      <div class="glass-card p-4">
+        <h5 style="font-weight:700;margin-bottom:16px;">👥 Recent Users</h5>
+        <div style="overflow:auto;max-height:380px;">
+          <table class="table-fin w-100">
+            <thead><tr><th>Name</th><th>Language</th><th>Level</th><th>XP</th></tr></thead>
+            <tbody>
+              {% for u in recent_users %}
+              <tr>
+                <td>
+                  <div style="font-weight:500;">{{ u.name }}</div>
+                  <div style="font-size:0.72rem;color:var(--text-muted);">{{ u.email }}</div>
+                </td>
+                <td><span class="badge-fin">{{ u.language }}</span></td>
+                <td style="text-transform:capitalize;font-size:0.82rem;">{{ u.financial_level or 'beginner' }}</td>
+                <td style="color:var(--neon-gold);font-weight:600;">{{ u.xp_points or 0 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Chart -->
+  <div class="glass-card p-4">
+    <h5 style="font-weight:700;margin-bottom:20px;">📈 Message Activity (Last 30 Days)</h5>
+    <div style="height:260px;"><canvas id="activityChart"></canvas></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let selectedFile = null;
+
+function handleFile(event) {
+  selectedFile = event.target.files[0];
+  if (selectedFile) {
+    document.getElementById('uploadLabel').innerHTML = `<strong style="color:var(--neon-green);">✅ ${selectedFile.name}</strong><br><span style="font-size:0.78rem;">${(selectedFile.size/1024/1024).toFixed(2)} MB</span>`;
+  }
+}
+
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  selectedFile = e.dataTransfer.files[0];
+  document.getElementById('uploadLabel').innerHTML = `<strong style="color:var(--neon-green);">✅ ${selectedFile.name}</strong>`;
+});
+
+async function uploadDocument() {
+  if (!selectedFile) { alert('Please select a file'); return; }
+  const title = document.getElementById('docTitle').value || selectedFile.name;
+  const btn = document.getElementById('uploadBtn');
+  btn.textContent = '⏳ Uploading & Indexing...';
+  btn.disabled = true;
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  formData.append('title', title);
+  formData.append('source_name', document.getElementById('docSource').value);
+  formData.append('source_url', document.getElementById('docUrl').value);
+  formData.append('category', document.getElementById('docCategory').value);
+  try {
+    const res = await fetch('/admin/documents/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`✅ Uploaded! Indexing ${data.document.chunk_count || '...'} chunks`, 'success');
+      // Auto-index
+      const indexRes = await fetch(`/admin/documents/${data.document.id}/index`, { method: 'POST' });
+      const indexData = await indexRes.json();
+      if (indexData.success) showToast(`✅ Indexed ${indexData.chunk_count} chunks into ChromaDB`, 'success');
+    } else {
+      showToast('❌ Upload failed: ' + data.message, 'error');
+    }
+  } catch(e) { showToast('❌ Upload error: ' + e.message, 'error'); }
+  finally { btn.textContent = '⬆️ Upload & Index Document'; btn.disabled = false; }
+}
+
+async function seedKnowledge() {
+  const btn = event.target;
+  btn.textContent = '⏳ Seeding...';
+  btn.disabled = true;
+  const res = await fetch('/admin/seed-knowledge', { method: 'POST' });
+  const data = await res.json();
+  showToast(`✅ Seeded ${data.documents_seeded} built-in knowledge documents`, 'success');
+  btn.textContent = '🌱 Seed Built-in Financial Knowledge';
+  btn.disabled = false;
+}
+
+// Load analytics chart
+async function loadAnalytics() {
+  const res = await fetch('/admin/analytics');
+  const data = await res.json();
+  const labels = data.daily_messages.map(d => d.date);
+  const counts = data.daily_messages.map(d => d.count);
+  new Chart(document.getElementById('activityChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'User Messages',
+        data: counts,
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102,126,234,0.1)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#667eea',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#a0aec0', font:{size:11} } } },
+      scales: {
+        x: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#718096',font:{size:10}} },
+        y: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#718096',font:{size:10}}, beginAtZero:true }
+      }
+    }
+  });
+}
+loadAnalytics();
+
+function showToast(msg, type) {
+  let t = document.getElementById('adminToast');
+  if (!t) { t = document.createElement('div'); t.id='adminToast'; t.className='toast-fin'; document.body.appendChild(t); }
+  t.innerHTML = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+</script>
+</body>
+</html>

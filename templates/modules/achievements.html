@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Achievements – Fin-Lit-Tutor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <style>
+    .module-page { max-width: 1000px; margin: 80px auto 40px; padding: 0 20px; }
+    .locked-badge { opacity: 0.3; filter: grayscale(100%); }
+  </style>
+</head>
+<body>
+<nav class="navbar-fin">
+  <div class="container-fluid px-3">
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="/" class="navbar-brand-fin gradient-text" style="text-decoration:none;font-size:1.2rem;"><div class="nav-logo" style="width:30px;height:30px;font-size:15px;">💰</div>Fin-Lit-Tutor</a>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-neon-outline" style="padding:6px 14px;font-size:0.8rem;">← Dashboard</a>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="module-page">
+  <div class="text-center mb-5">
+    <span class="badge-fin">Gamification</span>
+    <h1 class="heading-lg gradient-text-gold mt-3">🏆 Achievements & Certificates</h1>
+    <p class="text-secondary mt-2">Earn XP, unlock badges, and get digital certificates for your financial learning</p>
+    <div class="badge-fin mt-3" style="font-size:1rem;padding:10px 24px;">{{ user.xp_points or 0 }} XP Total</div>
+  </div>
+
+  <!-- Earned Achievements -->
+  {% if achievements %}
+  <h3 class="heading-sm mb-3">🎖️ Your Earned Badges</h3>
+  <div class="row g-3 mb-5">
+    {% for achievement in achievements %}
+    <div class="col-6 col-md-4 col-lg-3">
+      <div class="achievement-badge">
+        <div class="badge-emoji">{{ achievement.badge_icon }}</div>
+        <div style="font-weight:700;font-size:0.9rem;">{{ achievement.title }}</div>
+        <div class="text-muted" style="font-size:0.75rem;">{{ achievement.description }}</div>
+        <div style="color:var(--neon-gold);font-size:0.8rem;font-weight:700;">+{{ achievement.xp_awarded }} XP</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- All Possible Achievements -->
+  <h3 class="heading-sm mb-3">🗝️ All Achievements</h3>
+  <div class="row g-3">
+    {% set all_badges = [
+      ('🌱', 'Financial Seedling', 'Completed your first learning topic', 50, True),
+      ('💬', 'First Query', 'Asked your first question to Fin-Lit-Tutor AI', 25, True),
+      ('📊', 'Budget Master', 'Used the Budget Planner tool', 75, False),
+      ('🏦', 'EMI Expert', 'Calculated a loan EMI', 50, False),
+      ('🛡️', 'Scam Spotter', 'Checked a suspicious message', 100, False),
+      ('🏛️', 'Scheme Scholar', 'Explored 5+ government schemes', 75, False),
+      ('🎓', 'Digital Apprentice', 'Completed 10 learning topics', 150, False),
+      ('💰', 'Financial Literate', 'Completed all modules', 500, False),
+      ('🌟', 'Fin-Lit-Tutor Champion', 'Earned 1000 XP', 250, False),
+      ('🏆', 'Financial Guru', 'Achieved Financial Score A+', 300, False),
+      ('🌍', 'Multilingual Learner', 'Used Fin-Lit-Tutor in 2+ languages', 100, False),
+      ('🚨', 'Fraud Guardian', 'Reported 3 suspicious messages', 200, False),
+    ] %}
+    {% for emoji, title, desc, xp, earned in all_badges %}
+    <div class="col-6 col-md-4 col-lg-3">
+      <div class="achievement-badge {% if not earned %}locked-badge{% endif %}">
+        <div class="badge-emoji">{{ emoji }}</div>
+        <div style="font-weight:700;font-size:0.88rem;">{{ title }}</div>
+        <div class="text-muted" style="font-size:0.73rem;">{{ desc }}</div>
+        <div style="color:var(--neon-gold);font-size:0.78rem;font-weight:700;">+{{ xp }} XP</div>
+        {% if not earned %}<div style="font-size:0.7rem;color:var(--text-muted);">🔒 Locked</div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Certificate Banner -->
+  <div class="glass-card p-5 text-center mt-5" style="background:linear-gradient(135deg,rgba(102,126,234,0.1),rgba(246,173,85,0.1));border:1px solid rgba(246,173,85,0.2);">
+    <div style="font-size:3rem;margin-bottom:16px;">📜</div>
+    <h3 class="heading-md gradient-text-gold mb-2">Digital Financial Literacy Certificate</h3>
+    <p class="text-secondary mb-4">Complete all 5 learning modules to earn your official Digital Financial Literacy Certificate powered by IBM Watsonx AI</p>
+    <button class="btn-gold" onclick="alert('Complete all learning modules to unlock your certificate!')" style="padding:12px 32px;">🎓 Unlock Certificate</button>
+  </div>
+</div>
+</body>
+</html>
